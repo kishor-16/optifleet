@@ -1,0 +1,26 @@
+[
+  {
+    "latitude": 27.9881,
+    "longitude": 86.925,
+    "quantity": 69,
+    "priority": "normal"
+  },
+  {
+    "latitude": 27.1751,
+    "longitude": 78.0421,
+    "quantity": 50,
+    "priority": "normal"
+  },
+  {
+    "latitude": 13.6833,
+    "longitude": 79.347,
+    "quantity": 70,
+    "priority": "normal"
+  },
+  {
+    "latitude": 34.857,
+    "longitude": 957.948,
+    "quantity": 23,
+    "priority": "high"
+  }
+]

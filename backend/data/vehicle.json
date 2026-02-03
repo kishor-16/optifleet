@@ -1,0 +1,5 @@
+[
+  { "vehicleId": "V1", "capacity": 150 },
+  { "vehicleId": "V2", "capacity": 100 },
+  { "vehicleId": "V3", "capacity": 80 }
+]

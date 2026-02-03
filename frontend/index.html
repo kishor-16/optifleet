@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delivery Optimization</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f2f2f2;
+            padding: 30px;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            width: 450px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ccc;
+        }
+        input, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        table {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td, th {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Add Delivery Route</h2>
+
+    <input id="lat" placeholder="Latitude">
+    <input id="lng" placeholder="Longitude">
+    <input id="qty" placeholder="Quantity">
+
+    <button onclick="addRoute()">Add Route</button>
+    <button onclick="optimize()">Optimize</button>
+
+    <h3>Routes Added</h3>
+    <ul id="routes"></ul>
+
+    <h3>Result</h3>
+    <div id="result"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
