@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OptiFleet Dashboard - Real-time route optimization and carbon tracking">
+    <title>OptiFleet Dashboard - Route Optimization</title>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
+</head>
+
+<body>
+    <!-- Dashboard Header -->
+    <header class="dashboard-header">
+        <div class="dashboard-header-content">
+            <a href="index.html" class="navbar-logo">
+                <div class="navbar-logo-icon">🚚</div>
+                <span>OptiFleet</span>
+            </a>
+
+            <div class="dashboard-header-actions">
+                <button class="btn btn-ghost btn-sm" id="refreshBtn">
+                    <span>🔄</span>
+                    <span>Refresh</span>
+                </button>
+                <button class="btn btn-secondary btn-sm">
+                    <span>👤</span>
+                    <span>Profile</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="dashboard-sidebar">
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link active">
+                    <span class="sidebar-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🗺️</span>
+                    <span>Route Planner</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🚛</span>
+                    <span>Fleet Management</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">📦</span>
+                    <span>Orders</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🤝</span>
+                    <span>Carrier Network</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">📈</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🌱</span>
+                    <span>Carbon Tracking</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Stats Overview -->
+            <section class="dashboard-section">
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="stat-card">
+                        <div class="stat-label">Today's Routes</div>
+                        <div class="stat-value" id="totalRoutes">0</div>
+                        <div class="badge badge-success">Active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">CO₂ Saved</div>
+                        <div class="stat-value" id="carbonSaved">0 kg</div>
+                        <div class="badge badge-success">↓ 45%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Distance Saved</div>
+                        <div class="stat-value" id="distanceSaved">0 km</div>
+                        <div class="badge badge-success">↓ 38%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Fuel Saved</div>
+                        <div class="stat-value" id="fuelSaved">0 L</div>
+                        <div class="badge badge-success">↓ 42%</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Route Optimization Panel -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">Route Optimization</h2>
+                    <p class="section-subtitle">Add delivery locations and optimize routes to reduce carbon emissions
+                    </p>
+                </div>
+
+                <div class="optimization-grid">
+                    <!-- Input Panel -->
+                    <div class="card">
+                        <h3 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-xl);">
+                            <span style="margin-right: var(--spacing-xs);">📍</span>
+                            Add Delivery Location
+                        </h3>
+
+                        <form id="routeForm" class="route-form">
+                            <div class="form-group">
+                                <label class="form-label">Latitude</label>
+                                <input type="number" id="lat" class="form-input" placeholder="e.g., 40.7128"
+                                    step="0.0001" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Longitude</label>
+                                <input type="number" id="lng" class="form-input" placeholder="e.g., -74.0060"
+                                    step="0.0001" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Package Quantity</label>
+                                <input type="number" id="qty" class="form-input" placeholder="e.g., 5" min="1" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                                <span>➕</span>
+                                <span>Add Location</span>
+                            </button>
+                        </form>
+
+                        <div style="margin-top: var(--spacing-lg);">
+                            <h4
+                                style="margin-bottom: var(--spacing-sm); color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: 600; text-transform: uppercase;">
+                                Quick Presets
+                            </h4>
+                            <div style="display: flex; gap: var(--spacing-xs); flex-wrap: wrap;">
+                                <button class="btn btn-ghost btn-sm" onclick="loadSampleData()">
+                                    <span>📋</span>
+                                    <span>Load Sample</span>
+                                </button>
+                                <button class="btn btn-ghost btn-sm" onclick="clearAllRoutes()">
+                                    <span>🗑️</span>
+                                    <span>Clear All</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Routes List -->
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                            <h3 style="font-size: var(--font-size-xl);">
+                                <span style="margin-right: var(--spacing-xs);">📋</span>
+                                Delivery Locations
+                            </h3>
+                            <span class="badge" id="routeCount">0 locations</span>
+                        </div>
+
+                        <div id="routesList" class="routes-list">
+                            <div class="empty-state">
+                                <div style="font-size: var(--font-size-3xl); margin-bottom: var(--spacing-sm);">📍</div>
+                                <p style="color: var(--color-text-tertiary);">No locations added yet</p>
+                                <p style="color: var(--color-text-muted); font-size: var(--font-size-sm);">Add delivery
+                                    locations to start optimizing</p>
+                            </div>
+                        </div>
+
+                        <button id="optimizeBtn" class="btn btn-primary"
+                            style="width: 100%; margin-top: var(--spacing-md);" disabled>
+                            <span>⚡</span>
+                            <span>Optimize Routes</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="dashboard-section" id="resultsSection" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="text-gradient">Optimization Results</span>
+                    </h2>
+                </div>
+
+                <div class="results-grid">
+                    <!-- Comparison Table -->
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <h3 style="margin-bottom: var(--spacing-lg); font-size: var(--font-size-xl);">
+                            <span style="margin-right: var(--spacing-xs);">📊</span>
+                            Before vs After Comparison
+                        </h3>
+
+                        <div class="comparison-table" id="comparisonTable">
+                            <!-- Table will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Optimization Details -->
+                    <div class="card">
+                        <h3 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-xl);">
+                            <span style="margin-right: var(--spacing-xs);">🎯</span>
+                            Optimization Strategy
+                        </h3>
+                        <div id="optimizationDetails" class="optimization-details">
+                            <!-- Details will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Environmental Impact -->
+                    <div class="card">
+                        <h3 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-xl);">
+                            <span style="margin-right: var(--spacing-xs);">🌱</span>
+                            Environmental Impact
+                        </h3>
+                        <div id="environmentalImpact" class="environmental-impact">
+                            <!-- Impact metrics will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Route Map Visualization (Placeholder) -->
+            <section class="dashboard-section">
+                <div class="card">
+                    <h3 style="margin-bottom: var(--spacing-lg); font-size: var(--font-size-xl);">
+                        <span style="margin-right: var(--spacing-xs);">🗺️</span>
+                        Route Visualization
+                    </h3>
+
+                    <div class="map-placeholder">
+                        <div style="text-align: center; padding: var(--spacing-3xl);">
+                            <div style="font-size: var(--font-size-4xl); margin-bottom: var(--spacing-md);">🗺️</div>
+                            <h4 style="margin-bottom: var(--spacing-sm);">Interactive Map Coming Soon</h4>
+                            <p style="color: var(--color-text-secondary);">
+                                Real-time route visualization with clustering and optimization overlay
+                            </p>
+                            <div
+                                style="margin-top: var(--spacing-lg); display: flex; gap: var(--spacing-sm); justify-content: center; flex-wrap: wrap;">
+                                <span class="badge">Leaflet.js Integration</span>
+                                <span class="badge">Real-time Updates</span>
+                                <span class="badge">Traffic Overlay</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Carrier Collaboration Hub -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">Carrier Collaboration Hub</h2>
+                    <p class="section-subtitle">Share capacity and reduce empty miles with trusted partners</p>
+                </div>
+
+                <div class="collaboration-grid">
+                    <div class="card">
+                        <h3 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-xl);">
+                            <span style="margin-right: var(--spacing-xs);">🤝</span>
+                            Available Capacity
+                        </h3>
+                        <div class="capacity-list">
+                            <div class="capacity-item">
+                                <div class="capacity-info">
+                                    <strong>Express Logistics Co.</strong>
+                                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+                                        Downtown Area • 15 packages</p>
+                                </div>
+                                <button class="btn btn-primary btn-sm">Connect</button>
+                            </div>
+                            <div class="capacity-item">
+                                <div class="capacity-info">
+                                    <strong>Green Delivery Inc.</strong>
+                                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">North
+                                        District • 22 packages</p>
+                                </div>
+                                <button class="btn btn-primary btn-sm">Connect</button>
+                            </div>
+                            <div class="capacity-item">
+                                <div class="capacity-info">
+                                    <strong>Swift Transport</strong>
+                                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">East
+                                        Zone • 8 packages</p>
+                                </div>
+                                <button class="btn btn-primary btn-sm">Connect</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-xl);">
+                            <span style="margin-right: var(--spacing-xs);">💡</span>
+                            Consolidation Opportunities
+                        </h3>
+                        <div class="opportunities-list">
+                            <div class="opportunity-item">
+                                <div class="opportunity-badge badge-success">High Match</div>
+                                <p><strong>3 carriers</strong> in West District</p>
+                                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+                                    Potential savings: <strong style="color: var(--color-success);">28 km, 12 kg
+                                        CO₂</strong>
+                                </p>
+                            </div>
+                            <div class="opportunity-item">
+                                <div class="opportunity-badge badge-warning">Medium Match</div>
+                                <p><strong>2 carriers</strong> in South Area</p>
+                                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+                                    Potential savings: <strong style="color: var(--color-success);">15 km, 6 kg
+                                        CO₂</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>

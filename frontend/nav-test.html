@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Test - OptiFleet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+
+        h1 {
+            color: #22c55e;
+        }
+
+        .test-section {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background: #22c55e;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: #1ea34b;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #22c55e33;
+            color: #22c55e;
+        }
+
+        .info {
+            background: #3b82f633;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 OptiFleet Navigation Test</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Direct Links</h2>
+        <p>These should navigate to the respective pages:</p>
+        <a href="index.html" class="btn">→ Landing Page</a>
+        <a href="dashboard.html" class="btn">→ Dashboard</a>
+        <a href="test.html" class="btn">→ API Test</a>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: JavaScript Navigation</h2>
+        <p>Test if JavaScript can navigate:</p>
+        <button class="btn" onclick="window.location.href='dashboard.html'">JS → Dashboard</button>
+        <button class="btn" onclick="openDashboard()">Function → Dashboard</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Current Page Status</h2>
+        <div id="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: File Existence Check</h2>
+        <button class="btn" onclick="checkFiles()">Check Files</button>
+        <div id="fileStatus"></div>
+    </div>
+
+    <script>
+        function openDashboard() {
+            console.log('Navigating to dashboard...');
+            window.location.href = 'dashboard.html';
+        }
+
+        async function checkFiles() {
+            const files = ['index.html', 'dashboard.html', 'test.html', 'styles.css', 'dashboard.js'];
+            const statusDiv = document.getElementById('fileStatus');
+            statusDiv.innerHTML = '<p>Checking files...</p>';
+
+            let results = '';
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    if (response.ok) {
+                        results += `<div class="status success">✅ ${file} - Found</div>`;
+                    } else {
+                        results += `<div class="status error">❌ ${file} - Not Found (${response.status})</div>`;
+                    }
+                } catch (error) {
+                    results += `<div class="status error">❌ ${file} - Error: ${error.message}</div>`;
+                }
+            }
+            statusDiv.innerHTML = results;
+        }
+
+        // Display current page info
+        document.getElementById('status').innerHTML = `
+            <div class="status info">
+                <strong>Current URL:</strong> ${window.location.href}<br>
+                <strong>Protocol:</strong> ${window.location.protocol}<br>
+                <strong>Host:</strong> ${window.location.host}<br>
+                <strong>Pathname:</strong> ${window.location.pathname}
+            </div>
+        `;
+
+        console.log('Navigation test page loaded');
+        console.log('Current location:', window.location.href);
+    </script>
+</body>
+
+</html>

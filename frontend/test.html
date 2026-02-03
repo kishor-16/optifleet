@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiFleet - API Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+
+        h1 {
+            color: #22c55e;
+        }
+
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #1ea34b;
+        }
+
+        #result {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .success {
+            color: #22c55e;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .info {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🚚 OptiFleet API Test</h1>
+    <p>Test the optimization API to ensure everything is working correctly.</p>
+
+    <button onclick="testAPI()">🧪 Test Optimization API</button>
+    <button onclick="testDashboard()">📊 Open Dashboard</button>
+    <button onclick="clearResult()">🗑️ Clear Results</button>
+
+    <div id="result"></div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        async function testAPI() {
+            resultDiv.innerHTML = '<span class="info">⏳ Testing API...</span>\n\n';
+
+            const testRoutes = [
+                { latitude: 40.7128, longitude: -74.0060, quantity: 5 },
+                { latitude: 40.7580, longitude: -73.9855, quantity: 3 },
+                { latitude: 40.7489, longitude: -73.9680, quantity: 8 },
+                { latitude: 40.7614, longitude: -73.9776, quantity: 4 },
+                { latitude: 40.7282, longitude: -73.7949, quantity: 6 }
+            ];
+
+            try {
+                const response = await fetch('/api/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ routes: testRoutes })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                resultDiv.innerHTML = '<span class="success">✅ API Test Successful!</span>\n\n';
+                resultDiv.innerHTML += '<span class="info">📊 Optimization Results:</span>\n';
+                resultDiv.innerHTML += '─'.repeat(60) + '\n\n';
+
+                resultDiv.innerHTML += `<span class="success">Algorithm:</span> ${data.optimizer}\n\n`;
+
+                resultDiv.innerHTML += '<span class="info">📏 Distance:</span>\n';
+                resultDiv.innerHTML += `  Before: ${data.before.distance} km\n`;
+                resultDiv.innerHTML += `  After:  ${data.after.distance} km\n`;
+                resultDiv.innerHTML += `  <span class="success">Saved:  ${data.savings.distance} km (${data.savings.percentage}%)</span>\n\n`;
+
+                resultDiv.innerHTML += '<span class="info">⛽ Fuel:</span>\n';
+                resultDiv.innerHTML += `  Before: ${data.before.fuel} L\n`;
+                resultDiv.innerHTML += `  After:  ${data.after.fuel} L\n`;
+                resultDiv.innerHTML += `  <span class="success">Saved:  ${data.savings.fuel} L</span>\n\n`;
+
+                resultDiv.innerHTML += '<span class="info">🌱 CO₂ Emissions:</span>\n';
+                resultDiv.innerHTML += `  Before: ${data.before.carbon} kg\n`;
+                resultDiv.innerHTML += `  After:  ${data.after.carbon} kg\n`;
+                resultDiv.innerHTML += `  <span class="success">Saved:  ${data.savings.carbon} kg</span>\n\n`;
+
+                if (data.clusters) {
+                    resultDiv.innerHTML += `<span class="info">📦 Clusters:</span> ${data.clusters.count}\n`;
+                }
+
+                if (data.vehicles) {
+                    resultDiv.innerHTML += '\n<span class="info">🚛 Vehicle Assignments:</span>\n';
+                    Object.entries(data.vehicles).forEach(([clusterId, vehicle]) => {
+                        resultDiv.innerHTML += `  Cluster ${clusterId}: ${vehicle.type} (${vehicle.utilization}% utilized)\n`;
+                    });
+                }
+
+                resultDiv.innerHTML += '\n' + '─'.repeat(60) + '\n';
+                resultDiv.innerHTML += '<span class="success">✅ Full-stack integration working perfectly!</span>\n';
+
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">❌ API Test Failed!</span>\n\n';
+                resultDiv.innerHTML += `Error: ${error.message}\n\n`;
+                resultDiv.innerHTML += 'Possible issues:\n';
+                resultDiv.innerHTML += '  1. Server not running (run: npm start)\n';
+                resultDiv.innerHTML += '  2. Python not installed or not in PATH\n';
+                resultDiv.innerHTML += '  3. Backend API error\n\n';
+                resultDiv.innerHTML += 'Check the browser console for more details.';
+                console.error('API Test Error:', error);
+            }
+        }
+
+        function testDashboard() {
+            window.location.href = '/dashboard.html';
+        }
+
+        function clearResult() {
+            resultDiv.innerHTML = '';
+        }
+
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            resultDiv.innerHTML = '<span class="info">👋 Welcome to OptiFleet API Test!</span>\n\n';
+            resultDiv.innerHTML += 'Click "Test Optimization API" to verify the system is working.\n';
+        });
+    </script>
+</body>
+
+</html>

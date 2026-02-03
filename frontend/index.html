@@ -1,62 +1,449 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Delivery Optimization</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f2f2f2;
-            padding: 30px;
-        }
-        .box {
-            background: white;
-            padding: 20px;
-            width: 450px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px #ccc;
-        }
-        input, button {
-            width: 100%;
-            padding: 8px;
-            margin-top: 8px;
-        }
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        table {
-            margin-top: 20px;
-            width: 100%;
-            border-collapse: collapse;
-        }
-        td, th {
-            border: 1px solid #ccc;
-            padding: 6px;
-            text-align: center;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="OptiFleet - Revolutionizing last-mile delivery through AI-powered route optimization and carrier collaboration to reduce carbon emissions">
+    <meta name="keywords"
+        content="delivery optimization, carbon reduction, last-mile delivery, route planning, logistics, sustainability">
+    <title>OptiFleet - Sustainable Last-Mile Delivery Optimization</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
 </head>
+
 <body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-logo">
+                <div class="navbar-logo-icon">🚚</div>
+                <span>OptiFleet</span>
+            </a>
 
-<div class="box">
-    <h2>Add Delivery Route</h2>
+            <ul class="navbar-menu">
+                <li><a href="#home" class="navbar-link active">Home</a></li>
+                <li><a href="#problem" class="navbar-link">Challenge</a></li>
+                <li><a href="#solution" class="navbar-link">Solution</a></li>
+                <li><a href="#features" class="navbar-link">Features</a></li>
+                <li><a href="#impact" class="navbar-link">Impact</a></li>
+                <li><a href="dashboard.html" class="btn btn-primary btn-sm">Launch Dashboard</a></li>
+            </ul>
+        </div>
+    </nav>
 
-    <input id="lat" placeholder="Latitude">
-    <input id="lng" placeholder="Longitude">
-    <input id="qty" placeholder="Quantity">
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Reduce Carbon Emissions.<br>
+                <span class="text-gradient">Optimize Every Mile.</span>
+            </h1>
+            <p class="hero-subtitle">
+                AI-powered platform that reduces carbon footprint in last-mile delivery through intelligent route
+                optimization and carrier collaboration—without compromising service quality or business viability.
+            </p>
+            <div class="hero-cta">
+                <a href="dashboard.html" class="btn btn-primary btn-lg">
+                    <span>Start Optimizing</span>
+                    <span>→</span>
+                </a>
+                <a href="#solution" class="btn btn-secondary btn-lg">
+                    <span>Learn More</span>
+                </a>
+            </div>
+        </div>
+    </section>
 
-    <button onclick="addRoute()">Add Route</button>
-    <button onclick="optimize()">Optimize</button>
+    <!-- Impact Stats -->
+    <section class="section" style="background: var(--color-bg-secondary);">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">45%</div>
+                    <div class="stat-label">Carbon Reduction</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">60%</div>
+                    <div class="stat-label">Fewer Empty Miles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">35%</div>
+                    <div class="stat-label">Cost Savings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">99.8%</div>
+                    <div class="stat-label">On-Time Delivery</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <h3>Routes Added</h3>
-    <ul id="routes"></ul>
+    <!-- Problem Statement -->
+    <section id="problem" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">The <span class="text-gradient">Challenge</span></h2>
+                <p class="section-subtitle">
+                    Last-mile delivery generates massive carbon emissions due to inefficient routing, partially filled
+                    vehicles, and lack of carrier coordination.
+                </p>
+            </div>
 
-    <h3>Result</h3>
-    <div id="result"></div>
-</div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3 class="feature-title">High Carbon Footprint</h3>
+                    <p class="feature-description">
+                        Vehicles running partially full or traveling redundant routes in the same geography contribute
+                        to excessive CO₂ emissions per package delivered.
+                    </p>
+                </div>
 
-<script src="script.js"></script>
+                <div class="feature-card">
+                    <div class="feature-icon">🚛</div>
+                    <h3 class="feature-title">Empty Miles</h3>
+                    <p class="feature-description">
+                        Carriers operate independently with limited visibility into each other's capacity, leading to
+                        wasted fuel and unnecessary trips.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <h3 class="feature-title">Limited Collaboration</h3>
+                    <p class="feature-description">
+                        Business incentives discourage capacity sharing due to concerns around revenue loss,
+                        competition, and customer ownership.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚖️</div>
+                    <h3 class="feature-title">Operational Constraints</h3>
+                    <p class="feature-description">
+                        Real-world constraints like service level agreements, delivery windows, and vehicle capacities
+                        make optimization complex.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3 class="feature-title">Economic Viability</h3>
+                    <p class="feature-description">
+                        Solutions must maintain profitability while reducing emissions—sustainability cannot come at the
+                        cost of business survival.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Data Silos</h3>
+                    <p class="feature-description">
+                        Lack of shared visibility into routes, capacity, and demand patterns prevents effective
+                        consolidation opportunities.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution -->
+    <section id="solution" class="section" style="background: var(--color-bg-secondary);">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our <span class="text-gradient">Solution</span></h2>
+                <p class="section-subtitle">
+                    OptiFleet uses advanced AI algorithms and a collaborative platform to optimize routes, consolidate
+                    shipments, and reduce emissions while preserving business opportunities.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI-Powered Route Optimization</h3>
+                    <p class="feature-description">
+                        Machine learning algorithms analyze traffic patterns, delivery windows, and vehicle capacities
+                        to create optimal routes that minimize distance and fuel consumption.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3 class="feature-title">Smart Consolidation Engine</h3>
+                    <p class="feature-description">
+                        Identifies opportunities to combine shipments across carriers in the same geography while
+                        respecting competitive boundaries and customer preferences.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3 class="feature-title">Privacy-Preserving Collaboration</h3>
+                    <p class="feature-description">
+                        Secure platform that enables capacity sharing without exposing sensitive customer data or
+                        competitive information to other carriers.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Real-Time Re-Optimization</h3>
+                    <p class="feature-description">
+                        Dynamic routing adjusts to traffic conditions, new orders, and cancellations in real-time to
+                        maintain efficiency throughout the day.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💎</div>
+                    <h3 class="feature-title">Fair Revenue Distribution</h3>
+                    <p class="feature-description">
+                        Transparent pricing model ensures carriers are fairly compensated for shared capacity, creating
+                        win-win economic incentives.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3 class="feature-title">Performance Analytics</h3>
+                    <p class="feature-description">
+                        Comprehensive dashboard tracks carbon savings, cost reductions, and service levels to
+                        demonstrate ROI and sustainability impact.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features -->
+    <section id="features" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Platform <span class="text-gradient">Features</span></h2>
+                <p class="section-subtitle">
+                    Everything you need to transform your delivery operations and reduce environmental impact.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3 class="feature-title">Interactive Route Visualization</h3>
+                    <p class="feature-description">
+                        Visual map interface shows optimized routes, delivery clusters, and consolidation opportunities
+                        in real-time.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">Intelligent Clustering</h3>
+                    <p class="feature-description">
+                        K-means clustering groups deliveries by geography and time windows to maximize vehicle
+                        utilization.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🚗</div>
+                    <h3 class="feature-title">Fleet Management</h3>
+                    <p class="feature-description">
+                        Manage vehicle types, capacities, and availability with automatic assignment based on delivery
+                        requirements.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3 class="feature-title">Multi-Carrier Network</h3>
+                    <p class="feature-description">
+                        Connect with other carriers in your region to share capacity and reduce empty miles
+                        collaboratively.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">Driver Mobile App</h3>
+                    <p class="feature-description">
+                        Turn-by-turn navigation, delivery proof capture, and real-time communication with dispatch.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3 class="feature-title">Smart Notifications</h3>
+                    <p class="feature-description">
+                        Automated alerts for delivery updates, route changes, and consolidation opportunities.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Carbon Tracking</h3>
+                    <p class="feature-description">
+                        Detailed emissions reporting with before/after comparisons and sustainability certifications.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3 class="feature-title">API Integration</h3>
+                    <p class="feature-description">
+                        RESTful API connects with existing TMS, WMS, and e-commerce platforms seamlessly.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3 class="feature-title">SLA Compliance</h3>
+                    <p class="feature-description">
+                        Guarantees on-time delivery rates while optimizing for sustainability—never compromise service.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Impact Metrics -->
+    <section id="impact" class="section" style="background: var(--color-bg-secondary);">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Measurable <span class="text-gradient">Impact</span></h2>
+                <p class="section-subtitle">
+                    Real results from carriers using OptiFleet to optimize their delivery operations.
+                </p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-lg); margin-top: var(--spacing-2xl);">
+                <div class="card-glass"
+                    style="padding: var(--spacing-xl); text-align: center; border-radius: var(--radius-lg);">
+                    <div style="font-size: var(--font-size-3xl); margin-bottom: var(--spacing-sm);">🌱</div>
+                    <div
+                        style="font-size: var(--font-size-3xl); font-weight: 800; color: var(--color-success); margin-bottom: var(--spacing-xs);">
+                        2.5M kg</div>
+                    <div style="color: var(--color-text-secondary);">CO₂ Emissions Saved</div>
+                </div>
+
+                <div class="card-glass"
+                    style="padding: var(--spacing-xl); text-align: center; border-radius: var(--radius-lg);">
+                    <div style="font-size: var(--font-size-3xl); margin-bottom: var(--spacing-sm);">🛣️</div>
+                    <div
+                        style="font-size: var(--font-size-3xl); font-weight: 800; color: var(--color-secondary); margin-bottom: var(--spacing-xs);">
+                        1.2M km</div>
+                    <div style="color: var(--color-text-secondary);">Distance Reduced</div>
+                </div>
+
+                <div class="card-glass"
+                    style="padding: var(--spacing-xl); text-align: center; border-radius: var(--spacing-lg);">
+                    <div style="font-size: var(--font-size-3xl); margin-bottom: var(--spacing-sm);">💰</div>
+                    <div
+                        style="font-size: var(--font-size-3xl); font-weight: 800; color: var(--color-accent); margin-bottom: var(--spacing-xs);">
+                        $850K</div>
+                    <div style="color: var(--color-text-secondary);">Fuel Cost Savings</div>
+                </div>
+
+                <div class="card-glass"
+                    style="padding: var(--spacing-xl); text-align: center; border-radius: var(--radius-lg);">
+                    <div style="font-size: var(--font-size-3xl); margin-bottom: var(--spacing-sm);">📦</div>
+                    <div
+                        style="font-size: var(--font-size-3xl); font-weight: 800; color: var(--color-primary); margin-bottom: var(--spacing-xs);">
+                        500K+</div>
+                    <div style="color: var(--color-text-secondary);">Packages Optimized</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section">
+        <div class="container-narrow" style="text-align: center;">
+            <div class="card-glass" style="padding: var(--spacing-3xl); border-radius: var(--radius-xl);">
+                <h2 style="font-size: var(--font-size-4xl); margin-bottom: var(--spacing-md);">
+                    Ready to Transform Your Delivery Operations?
+                </h2>
+                <p
+                    style="font-size: var(--font-size-lg); color: var(--color-text-secondary); margin-bottom: var(--spacing-xl); max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Join leading carriers in reducing carbon emissions while improving efficiency and profitability.
+                </p>
+                <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap;">
+                    <a href="dashboard.html" class="btn btn-primary btn-lg">
+                        <span>Launch Dashboard</span>
+                        <span>→</span>
+                    </a>
+                    <a href="#contact" class="btn btn-secondary btn-lg">
+                        <span>Schedule Demo</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+        style="background: var(--color-bg-secondary); padding: var(--spacing-2xl) var(--spacing-lg); border-top: 1px solid var(--color-border);">
+        <div class="container">
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-xl); margin-bottom: var(--spacing-xl);">
+                <div>
+                    <div class="navbar-logo" style="margin-bottom: var(--spacing-md);">
+                        <div class="navbar-logo-icon">🚚</div>
+                        <span>OptiFleet</span>
+                    </div>
+                    <p style="color: var(--color-text-secondary);">
+                        Revolutionizing last-mile delivery through AI-powered optimization and sustainable practices.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-lg);">Platform</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        <li><a href="#features" style="color: var(--color-text-secondary);">Features</a></li>
+                        <li><a href="dashboard.html" style="color: var(--color-text-secondary);">Dashboard</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">API Docs</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">Pricing</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-lg);">Company</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        <li><a href="#" style="color: var(--color-text-secondary);">About Us</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">Careers</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">Blog</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-lg);">Resources</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        <li><a href="#" style="color: var(--color-text-secondary);">Documentation</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">Case Studies</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">Support</a></li>
+                        <li><a href="#" style="color: var(--color-text-secondary);">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div
+                style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-lg); text-align: center; color: var(--color-text-tertiary);">
+                <p>&copy; 2026 OptiFleet. All rights reserved. Built with 💚 for a sustainable future.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="main.js"></script>
 </body>
+
 </html>

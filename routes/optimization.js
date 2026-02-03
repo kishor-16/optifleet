@@ -1,16 +1,15 @@
-const express = require("express");
-const { spawn } = require("child_process");
-const path = require("path");
-
+const express = require('express');
 const router = express.Router();
+const { spawn } = require('child_process');
+const path = require('path');
+const Route = require('../models/Route');
 
 // ============================================
-// JAVASCRIPT FALLBACK OPTIMIZATION
+// HELPER FUNCTIONS (Haversine & Optimization)
 // ============================================
 
-// Helper function: Calculate distance using Haversine formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
 
@@ -26,7 +25,6 @@ function toRad(degrees) {
     return degrees * (Math.PI / 180);
 }
 
-// Helper function: Calculate total distance for route array
 function calculateTotalDistance(routeArray) {
     if (routeArray.length < 2) return 0;
 
@@ -42,7 +40,6 @@ function calculateTotalDistance(routeArray) {
     return totalDistance;
 }
 
-// Helper function: Nearest neighbor optimization
 function nearestNeighborOptimization(routeArray) {
     if (routeArray.length <= 1) return routeArray;
 
@@ -75,7 +72,6 @@ function nearestNeighborOptimization(routeArray) {
     return optimized;
 }
 
-// JavaScript fallback optimization
 function jsOptimization(routes) {
     const beforeDistance = calculateTotalDistance(routes);
     const beforeFuel = beforeDistance * 0.12;
@@ -117,25 +113,17 @@ function jsOptimization(routes) {
     };
 }
 
-// ============================================
-// PYTHON OPTIMIZER INTEGRATION
-// ============================================
-
 function runPythonOptimizer(routes) {
     return new Promise((resolve, reject) => {
-        const pythonScript = path.join(__dirname, '../../optimizer/optimize.py');
-
-        // Spawn Python process
+        const pythonScript = path.join(__dirname, '../optimizer/optimize.py');
         const pythonProcess = spawn('python', [pythonScript]);
 
         let outputData = '';
         let errorData = '';
 
-        // Send input data to Python script
         pythonProcess.stdin.write(JSON.stringify({ routes }));
         pythonProcess.stdin.end();
 
-        // Collect output
         pythonProcess.stdout.on('data', (data) => {
             outputData += data.toString();
         });
@@ -144,15 +132,12 @@ function runPythonOptimizer(routes) {
             errorData += data.toString();
         });
 
-        // Handle completion
         pythonProcess.on('close', (code) => {
             if (code !== 0) {
                 reject(new Error(`Python optimizer failed: ${errorData}`));
             } else {
                 try {
                     const result = JSON.parse(outputData);
-
-                    // Format result to match expected structure
                     if (result.success && result.metrics) {
                         resolve({
                             success: true,
@@ -162,9 +147,7 @@ function runPythonOptimizer(routes) {
                             optimizer: result.optimizer,
                             optimizedRoutes: result.optimizedRoutes,
                             clusters: result.clusters,
-                            vehicles: result.vehicles,
-                            totalPackages: result.totalPackages,
-                            totalLocations: result.totalLocations
+                            vehicles: result.vehicles
                         });
                     } else {
                         reject(new Error(result.error || 'Unknown error'));
@@ -175,23 +158,23 @@ function runPythonOptimizer(routes) {
             }
         });
 
-        // Set timeout
         setTimeout(() => {
             pythonProcess.kill();
             reject(new Error('Python optimizer timeout'));
-        }, 30000); // 30 second timeout
+        }, 30000);
     });
 }
 
 // ============================================
-// OPTIMIZATION ENDPOINT
+// ROUTES
 // ============================================
 
-router.post("/optimize", async (req, res) => {
+// POST /api/optimize - Optimize routes
+router.post('/', async (req, res) => {
     try {
-        const routes = req.body.routes || [];
+        const { routes, saveToDatabase = false, routeName } = req.body;
 
-        if (routes.length < 2) {
+        if (!routes || routes.length < 2) {
             return res.status(400).json({
                 error: "At least 2 routes are required for optimization"
             });
@@ -199,27 +182,51 @@ router.post("/optimize", async (req, res) => {
 
         console.log(`\n🚀 Optimizing ${routes.length} routes...`);
 
+        let result;
+
         // Try Python optimizer first
         try {
-            console.log('📊 Using Python optimizer with K-means clustering...');
-            const result = await runPythonOptimizer(routes);
+            console.log('📊 Using Python optimizer...');
+            result = await runPythonOptimizer(routes);
             console.log('✅ Python optimization successful');
-            console.log(`   Clusters: ${result.clusters?.count || 'N/A'}`);
-            console.log(`   Savings: ${result.savings?.percentage}%`);
-
-            return res.json(result);
-
         } catch (pythonError) {
             console.log('⚠️  Python optimizer failed:', pythonError.message);
             console.log('🔄 Falling back to JavaScript optimizer...');
-
-            // Fallback to JavaScript optimization
-            const result = jsOptimization(routes);
+            result = jsOptimization(routes);
             console.log('✅ JavaScript optimization successful');
-            console.log(`   Savings: ${result.savings.percentage}%`);
-
-            return res.json(result);
         }
+
+        // Save to database if requested
+        if (saveToDatabase && Route) {
+            try {
+                const newRoute = new Route({
+                    name: routeName || `Route ${new Date().toISOString()}`,
+                    locations: routes,
+                    optimized: true,
+                    optimizationResults: {
+                        before: result.before,
+                        after: result.after,
+                        savings: result.savings,
+                        optimizer: result.optimizer,
+                        clusters: result.clusters,
+                        vehicles: result.vehicles
+                    },
+                    status: 'optimized'
+                });
+
+                await newRoute.save();
+                console.log('💾 Route saved to database');
+                result.savedRoute = {
+                    id: newRoute._id,
+                    name: newRoute.name
+                };
+            } catch (dbError) {
+                console.error('Database save error:', dbError.message);
+                // Continue even if database save fails
+            }
+        }
+
+        res.json(result);
 
     } catch (error) {
         console.error("❌ Optimization error:", error);
