@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiFleet - Route Map Visualization</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .map-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .map-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .map-header h1 {
+            font-size: 24px;
+            color: #22c55e;
+            margin-bottom: 10px;
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .map-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        .map-sidebar {
+            width: 350px;
+            background: #1e293b;
+            border-left: 1px solid #334155;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .stats-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card h3 {
+            font-size: 16px;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .stat-value.before {
+            color: #ef4444;
+        }
+
+        .stat-value.after {
+            color: #22c55e;
+        }
+
+        .legend {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .legend h4 {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-line.before {
+            background: #ef4444;
+        }
+
+        .legend-line.after {
+            background: #22c55e;
+        }
+
+        .legend-text {
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #334155;
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        /* Custom Leaflet Popup */
+        .leaflet-popup-content-wrapper {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .leaflet-popup-content {
+            margin: 12px;
+            font-size: 13px;
+        }
+
+        .leaflet-popup-tip {
+            background: #1e293b;
+        }
+
+        .popup-title {
+            font-weight: 600;
+            color: #22c55e;
+            margin-bottom: 8px;
+        }
+
+        .popup-detail {
+            color: #94a3b8;
+            margin: 4px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="map-container">
+        <div class="map-header">
+            <h1>🗺️ OptiFleet Route Visualization</h1>
+            <div class="map-controls">
+                <button class="btn btn-primary" onclick="loadSampleAndOptimize()">
+                    <span>🚀</span>
+                    <span>Load & Optimize Sample Routes</span>
+                </button>
+                <button class="btn btn-secondary" onclick="toggleBeforeRoute()">
+                    <span>👁️</span>
+                    <span id="beforeToggleText">Hide Before Route</span>
+                </button>
+                <button class="btn btn-secondary" onclick="toggleAfterRoute()">
+                    <span>👁️</span>
+                    <span id="afterToggleText">Hide After Route</span>
+                </button>
+                <button class="btn btn-secondary" onclick="clearMap()">
+                    <span>🗑️</span>
+                    <span>Clear Map</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="map-content">
+            <div id="map"></div>
+
+            <div class="map-sidebar">
+                <div class="stats-card">
+                    <h3>📊 Route Comparison</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Distance (Before)</span>
+                        <span class="stat-value before" id="distanceBefore">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Distance (After)</span>
+                        <span class="stat-value after" id="distanceAfter">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Distance Saved</span>
+                        <span class="stat-value" id="distanceSaved">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">CO₂ Saved</span>
+                        <span class="stat-value" id="carbonSaved">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Savings Percentage</span>
+                        <span class="stat-value" id="savingsPercent">--</span>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <h4>🎨 Map Legend</h4>
+                    <div class="legend-item">
+                        <div class="legend-line before"></div>
+                        <span class="legend-text">Before Optimization (Inefficient)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line after"></div>
+                        <span class="legend-text">After Optimization (Efficient)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span style="font-size: 20px;">📍</span>
+                        <span class="legend-text">Delivery Locations</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Calculating optimal routes along roads...</div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet Routing Machine (for road-based routing) -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <script src="map-visualization.js"></script>
+</body>
+
+</html>

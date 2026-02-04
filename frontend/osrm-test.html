@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSRM Test - Road Routing</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .info {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="info">
+        <h1>🗺️ OSRM Road Routing Test</h1>
+        <p>Testing if routes follow real roads using OSRM API</p>
+        <div id="status" class="status loading">⏳ Loading map...</div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const statusEl = document.getElementById('status');
+
+        // NYC sample locations
+        const locations = [
+            { lat: 40.7128, lng: -74.0060, name: "Lower Manhattan" },
+            { lat: 40.8584, lng: -73.9285, name: "Bronx" },
+            { lat: 40.7489, lng: -73.9680, name: "Midtown" },
+            { lat: 40.6782, lng: -73.9442, name: "Brooklyn" },
+            { lat: 40.7614, lng: -73.9776, name: "Central Park" }
+        ];
+
+        // Initialize map
+        const map = L.map('map').setView([40.7128, -74.0060], 11);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        statusEl.textContent = '✅ Map loaded. Fetching road route from OSRM...';
+        statusEl.className = 'status loading';
+
+        // Add markers
+        locations.forEach((loc, index) => {
+            L.marker([loc.lat, loc.lng])
+                .addTo(map)
+                .bindPopup(`<b>${index + 1}. ${loc.name}</b>`);
+        });
+
+        // Fetch route from OSRM
+        async function drawRoadRoute() {
+            try {
+                const waypoints = locations.map(loc => `${loc.lng},${loc.lat}`).join(';');
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${waypoints}?overview=full&geometries=geojson`;
+
+                console.log('🛣️ OSRM URL:', osrmUrl);
+
+                const response = await fetch(osrmUrl);
+                console.log('📡 Response status:', response.status);
+
+                const data = await response.json();
+                console.log('📦 Response data:', data);
+
+                if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+
+                    // Draw route along roads
+                    const polyline = L.polyline(coordinates, {
+                        color: '#22c55e',
+                        weight: 5,
+                        opacity: 0.8
+                    }).addTo(map);
+
+                    const distanceKm = (route.distance / 1000).toFixed(2);
+                    const durationMin = Math.round(route.duration / 60);
+
+                    polyline.bindPopup(`
+                        <b>Route along real roads!</b><br>
+                        Distance: ${distanceKm} km<br>
+                        Duration: ${durationMin} min
+                    `);
+
+                    // Fit map to route
+                    map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+                    statusEl.textContent = `✅ SUCCESS! Route drawn along roads (${distanceKm} km, ${durationMin} min)`;
+                    statusEl.className = 'status success';
+
+                    console.log('✅ Route drawn successfully!');
+                } else {
+                    throw new Error(`OSRM returned code: ${data.code}`);
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                statusEl.textContent = `❌ ERROR: ${error.message}. Check browser console for details.`;
+                statusEl.className = 'status error';
+
+                // Draw straight line as fallback
+                const coords = locations.map(loc => [loc.lat, loc.lng]);
+                L.polyline(coords, {
+                    color: '#ef4444',
+                    weight: 3,
+                    opacity: 0.6,
+                    dashArray: '10, 10'
+                }).addTo(map).bindPopup('Fallback: Straight line (OSRM failed)');
+            }
+        }
+
+        // Draw the route
+        drawRoadRoute();
+    </script>
+</body>
+
+</html>
