@@ -401,8 +401,8 @@ function displayResults(data) {
     // Initialize map asynchronously
     setTimeout(async () => {
       await initMap();
-      drawBeforeRoute();
-      drawAfterRoute();
+      await drawBeforeRoute();
+      await drawAfterRoute();
       updateMapStats();
       
       // Fit map to bounds
@@ -484,6 +484,35 @@ function showSuccessMessage(message) {
 // MAP VISUALIZATION
 // ============================================
 
+// Fetch route geometry from OSRM (Open Source Routing Machine)
+async function getRouteGeometry(routePoints) {
+  if (routePoints.length < 2) return null;
+
+  try {
+    // Format coordinates for OSRM: lon,lat;lon,lat...
+    const coords = routePoints.map(r => `${r.longitude},${r.latitude}`).join(';');
+    
+    // Call OSRM routing API
+    const response = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    
+    if (!response.ok) throw new Error('OSRM API error');
+    
+    const data = await response.json();
+    
+    if (data.routes && data.routes[0] && data.routes[0].geometry) {
+      // Convert GeoJSON coordinates to Leaflet format [lat, lng]
+      return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+    }
+  } catch (error) {
+    console.warn('Could not fetch OSRM route:', error.message);
+  }
+  
+  return null;
+}
+
 async function initMap() {
   await ensureLeaflet();
 
@@ -501,7 +530,7 @@ async function initMap() {
   }).addTo(leafletMap);
 }
 
-function drawBeforeRoute() {
+async function drawBeforeRoute() {
   if (!leafletMap || !optimizationResults) return;
 
   if (beforeLayer) {
@@ -514,14 +543,28 @@ function drawBeforeRoute() {
   // Create a feature group for the before route
   const featureGroup = L.featureGroup();
 
+  // Get actual road geometry from OSRM
+  const routeGeometry = await getRouteGeometry(beforeRoutes);
+  
   // Draw polyline for before route
-  const beforeCoords = beforeRoutes.map(r => [r.latitude, r.longitude]);
-  L.polyline(beforeCoords, {
-    color: '#cc0000',
-    weight: 6,
-    opacity: 1,
-    dashArray: '8, 4'
-  }).addTo(featureGroup);
+  if (routeGeometry && routeGeometry.length > 0) {
+    // Use actual road geometry if available
+    L.polyline(routeGeometry, {
+      color: '#cc0000',
+      weight: 6,
+      opacity: 1,
+      dashArray: '8, 4'
+    }).addTo(featureGroup);
+  } else {
+    // Fallback to straight lines if API fails
+    const beforeCoords = beforeRoutes.map(r => [r.latitude, r.longitude]);
+    L.polyline(beforeCoords, {
+      color: '#cc0000',
+      weight: 6,
+      opacity: 1,
+      dashArray: '8, 4'
+    }).addTo(featureGroup);
+  }
 
   // Add markers for each stop
   beforeRoutes.forEach((route, index) => {
@@ -541,7 +584,7 @@ function drawBeforeRoute() {
   featureGroup.addTo(leafletMap);
 }
 
-function drawAfterRoute() {
+async function drawAfterRoute() {
   if (!leafletMap || !optimizationResults) return;
 
   if (afterLayer) {
@@ -554,13 +597,26 @@ function drawAfterRoute() {
   // Create a feature group for the after route
   const featureGroup = L.featureGroup();
 
+  // Get actual road geometry from OSRM
+  const routeGeometry = await getRouteGeometry(afterRoutes);
+  
   // Draw polyline for after route
-  const afterCoords = afterRoutes.map(r => [r.latitude, r.longitude]);
-  L.polyline(afterCoords, {
-    color: '#00aa00',
-    weight: 6,
-    opacity: 1
-  }).addTo(featureGroup);
+  if (routeGeometry && routeGeometry.length > 0) {
+    // Use actual road geometry if available
+    L.polyline(routeGeometry, {
+      color: '#00aa00',
+      weight: 6,
+      opacity: 1
+    }).addTo(featureGroup);
+  } else {
+    // Fallback to straight lines if API fails
+    const afterCoords = afterRoutes.map(r => [r.latitude, r.longitude]);
+    L.polyline(afterCoords, {
+      color: '#00aa00',
+      weight: 6,
+      opacity: 1
+    }).addTo(featureGroup);
+  }
 
   // Add markers for each stop
   afterRoutes.forEach((route, index) => {
