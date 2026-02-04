@@ -16,22 +16,22 @@ let afterLayer = null;
 
 // Load Leaflet CSS and JS dynamically if not already loaded
 function ensureLeaflet() {
-    if (typeof L === 'undefined') {
-        // Load Leaflet CSS
-        const leafletCSS = document.createElement('link');
-        leafletCSS.rel = 'stylesheet';
-        leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-        document.head.appendChild(leafletCSS);
+  if (typeof L === 'undefined') {
+    // Load Leaflet CSS
+    const leafletCSS = document.createElement('link');
+    leafletCSS.rel = 'stylesheet';
+    leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(leafletCSS);
 
-        // Load Leaflet JS
-        return new Promise((resolve) => {
-            const leafletScript = document.createElement('script');
-            leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            leafletScript.onload = resolve;
-            document.head.appendChild(leafletScript);
-        });
-    }
-    return Promise.resolve();
+    // Load Leaflet JS
+    return new Promise((resolve) => {
+      const leafletScript = document.createElement('script');
+      leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      leafletScript.onload = resolve;
+      document.head.appendChild(leafletScript);
+    });
+  }
+  return Promise.resolve();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -53,11 +53,18 @@ function initDashboard() {
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
       refreshBtn.classList.add('loading');
+      // Simple page reload to refresh application state
       setTimeout(() => {
-        updateStats();
-        refreshBtn.classList.remove('loading');
-        showSuccessMessage('Dashboard refreshed!');
-      }, 1000);
+        window.location.reload();
+      }, 300);
+    });
+  }
+
+  const profileBtn = document.getElementById('profileBtn');
+  if (profileBtn) {
+    profileBtn.addEventListener('click', () => {
+      // Just a placeholder interaction for now
+      alert('👤 User Profile\n\n- Role: Fleet Manager\n- Organization: OptiFleet Logistics\n- Plan: Premium Enterprise');
     });
   }
 
@@ -72,17 +79,51 @@ function initDashboard() {
     clearAllBtn.addEventListener('click', clearAllRoutes);
   }
 
+  // Sidebar Panel Navigation
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
   sidebarLinks.forEach(link => {
     link.addEventListener('click', (e) => {
-      if (link.getAttribute('href') === '#') {
-        e.preventDefault();
-        sidebarLinks.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
+      e.preventDefault();
+      const panelId = link.getAttribute('data-panel');
+      if (panelId) {
+        showPanel(panelId);
       }
     });
   });
 }
+
+function showPanel(panelId) {
+  // Hide all panels
+  const panels = document.querySelectorAll('.dashboard-panel');
+  panels.forEach(panel => {
+    panel.style.display = 'none';
+  });
+
+  // Show target panel
+  const targetPanel = document.getElementById(panelId);
+  if (targetPanel) {
+    targetPanel.style.display = 'block';
+  }
+
+  // Update Sidebar Active State
+  const sidebarLinks = document.querySelectorAll('.sidebar-link');
+  sidebarLinks.forEach(link => {
+    if (link.getAttribute('data-panel') === panelId) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+
+  // Special handling for Leaflet Map resizing
+  if (panelId === 'panel-route-planner' && leafletMap) {
+    setTimeout(() => {
+      leafletMap.invalidateSize();
+    }, 100);
+  }
+}
+
+// ... existing code ...
 
 // ============================================
 // ROUTE FORM HANDLING
@@ -269,9 +310,15 @@ function initOptimization() {
       console.log('✅ Optimization complete!');
       console.log('Results:', data);
 
+      if (data.vehicleCounts) {
+        console.log('🚗 Vehicle Counts:', data.vehicleCounts);
+      } else {
+        console.warn('⚠️ No vehicleCounts found in response!');
+      }
+
       // Store original routes as beforeRoutes for map visualization
       data.beforeRoutes = routes;
-      
+
       optimizationResults = data;
 
       displayResults(data);
@@ -279,6 +326,11 @@ function initOptimization() {
 
       hideLoadingOverlay();
       showSuccessMessage(`✅ Saved ${data.savings.percentage}% distance!`);
+
+      // Optional: Auto switch to RESULTS or MAP? 
+      // User said "click the panel to go to it", so we won't auto-switch, 
+      // but maybe we should show a toast saying "Check Route Planner and Fleet Management tabs for results".
+      showSuccessMessage('Check "Route Planner" and "Fleet Management" panels for results!');
 
     } catch (error) {
       console.error('❌ Error:', error);
@@ -293,16 +345,12 @@ function initOptimization() {
 // ============================================
 
 function displayResults(data) {
-  const resultsSection = document.getElementById('resultsSection');
   const comparisonTable = document.getElementById('comparisonTable');
   const optimizationDetails = document.getElementById('optimizationDetails');
   const environmentalImpact = document.getElementById('environmentalImpact');
 
-  resultsSection.style.display = 'block';
-
-  setTimeout(() => {
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 300);
+  // No longer need to toggle display block or scrollIntoView for the whole section
+  // because panels control visibility.
 
   // Comparison Table
   comparisonTable.innerHTML = `
@@ -334,6 +382,13 @@ function displayResults(data) {
                     <td class="metric-value">${data.after.carbon} kg</td>
                     <td><span class="metric-improvement">↓ ${data.savings.carbon} kg</span></td>
                 </tr>
+                ${data.vehicleCounts ? `
+                <tr>
+                    <td><strong>Vehicles</strong></td>
+                    <td class="metric-value">${data.vehicleCounts.before}</td>
+                    <td class="metric-value">${data.vehicleCounts.after}</td>
+                    <td><span class="metric-improvement">↓ ${data.vehicleCounts.before - data.vehicleCounts.after} (${data.vehicleCounts.improvement}%)</span></td>
+                </tr>` : ''}
             </tbody>
         </table>
     `;
@@ -358,7 +413,7 @@ function displayResults(data) {
             <div class="detail-icon">🚛</div>
             <div class="detail-content">
                 <h4>Vehicle</h4>
-                <p>Standard delivery van (12L/100km)</p>
+                <p>Standard delivery van (Capacity: 10 orders)</p>
             </div>
         </div>
         <div class="detail-item">
@@ -394,56 +449,78 @@ function displayResults(data) {
         </div>
     `;
 
-  // Initialize and display the map
+  // Initialize and display the map if needed (it will just be ready when user switches tab)
   const mapSection = document.getElementById('mapSection');
   if (mapSection) {
+    // Ensure map section is visible WITHIN its panel (it might be hidden by panel, but display:block on section is fine)
     mapSection.style.display = 'block';
     currentMapView = 'before'; // Reset to before view
-    
+
     // Initialize map asynchronously
     setTimeout(async () => {
       await initMap();
       await drawBeforeRoute();
       await drawAfterRoute();
       updateMapStats();
-      
+
       // Show only before route initially
       if (beforeLayer && afterLayer) {
         leafletMap.removeLayer(afterLayer);
       }
-      
-      // Fit map to before route bounds
+
+      // Fit map to before route bounds IF map is visible. 
+      // If panel is hidden, fitBounds might not work perfectly, but we have invalidateSize on showPanel.
       if (leafletMap && beforeLayer) {
-        leafletMap.fitBounds(beforeLayer.getBounds().pad(0.1));
+        try {
+          leafletMap.fitBounds(beforeLayer.getBounds().pad(0.1));
+        } catch (e) { console.log("Map not visible yet"); }
       }
-      
+
       // Add button event listeners
       const beforeBtn = document.getElementById('beforeOptBtn');
       const afterBtn = document.getElementById('afterOptBtn');
-      
+
       if (beforeBtn) {
-        beforeBtn.addEventListener('click', () => {
+        // Remove old listeners to prevent duplicates (by cloning) or just add if we assume reload
+        // Ideally we should handle this better, but for now simple add is okay if we don't spam optimize.
+        // Better: check if they have listeners? No easy way.
+        // Replacement approach: The entire map init is creating listeners. 
+        // We should move listener attachment OUT of displayResults or ensure it's idempotent.
+        // For this task I'll rely on it being okay or user reloading page.
+
+        beforeBtn.onclick = () => {
           toggleMapView('before');
           if (leafletMap && beforeLayer) {
             leafletMap.fitBounds(beforeLayer.getBounds().pad(0.1));
           }
-        });
+        };
       }
-      
+
       if (afterBtn) {
-        afterBtn.addEventListener('click', () => {
+        afterBtn.onclick = () => {
           toggleMapView('after');
           if (leafletMap && afterLayer) {
             leafletMap.fitBounds(afterLayer.getBounds().pad(0.1));
           }
-        });
+        };
       }
     }, 500);
   }
+
+  // Update Analytics Chart
+  updateAnalytics(data);
 }
 
 function hideResults() {
-  document.getElementById('resultsSection').style.display = 'none';
+  // Clear the content instead of hiding section
+  const comparisonTable = document.getElementById('comparisonTable');
+  if (comparisonTable) comparisonTable.innerHTML = '<p style="color: var(--color-text-muted);">Run optimization to see comparisons.</p>';
+
+  const optimizationDetails = document.getElementById('optimizationDetails');
+  if (optimizationDetails) optimizationDetails.innerHTML = '<p style="color: var(--color-text-muted);">No active strategy.</p>';
+
+  const environmentalImpact = document.getElementById('environmentalImpact');
+  if (environmentalImpact) environmentalImpact.innerHTML = '<p style="color: var(--color-text-muted);">Run optimization to see impact data.</p>';
 }
 
 // ============================================
@@ -512,32 +589,138 @@ function showSuccessMessage(message) {
 // MAP VISUALIZATION
 // ============================================
 
-// Fetch route geometry from OSRM (Open Source Routing Machine)
+// ============================================
+// ANALYTICS & CHARTS
+// ============================================
+
+let carbonChartInstance = null;
+let vehicleChartInstance = null;
+
+function updateAnalytics(data) {
+  // --- Carbon Chart ---
+  const ctxCarbon = document.getElementById('carbonChart');
+  if (ctxCarbon) {
+    if (carbonChartInstance) {
+      carbonChartInstance.destroy();
+    }
+
+    // Convert to numbers explicitly
+    const carbonBefore = parseFloat(data.before.carbon);
+    const carbonAfter = parseFloat(data.after.carbon);
+
+    carbonChartInstance = new Chart(ctxCarbon, {
+      type: 'bar',
+      data: {
+        labels: ['Before', 'After'],
+        datasets: [{
+          label: 'CO₂ Emissions (kg)',
+          data: [carbonBefore, carbonAfter],
+          backgroundColor: [
+            'rgba(204, 0, 0, 0.7)', // Red
+            'rgba(0, 170, 0, 0.7)'  // Green
+          ],
+          borderColor: [
+            'rgba(204, 0, 0, 1)',
+            'rgba(0, 170, 0, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Carbon Footprint (kg)' }
+        }
+      }
+    });
+  }
+
+  // --- Vehicle Chart ---
+  const ctxVehicle = document.getElementById('vehicleChart');
+  if (ctxVehicle && data.vehicleCounts) {
+    if (vehicleChartInstance) {
+      vehicleChartInstance.destroy();
+    }
+
+    const vehiclesBefore = parseInt(data.vehicleCounts.before);
+    const vehiclesAfter = parseInt(data.vehicleCounts.after);
+
+    vehicleChartInstance = new Chart(ctxVehicle, {
+      type: 'bar',
+      data: {
+        labels: ['Before', 'After'],
+        datasets: [{
+          label: 'Vehicles Required',
+          data: [vehiclesBefore, vehiclesAfter],
+          backgroundColor: [
+            'rgba(255, 159, 64, 0.7)', // Orange
+            'rgba(54, 162, 235, 0.7)'  // Blue
+          ],
+          borderColor: [
+            'rgba(255, 159, 64, 1)',
+            'rgba(54, 162, 235, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 },
+            title: { display: true, text: 'Vehicles' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Fleet Optimization' }
+        }
+      }
+    });
+  }
+}
+
+// Fetch route geometry from OSRM via Backend Proxy
 async function getRouteGeometry(routePoints) {
+
   if (routePoints.length < 2) return null;
 
   try {
     // Format coordinates for OSRM: lon,lat;lon,lat...
     const coords = routePoints.map(r => `${r.longitude},${r.latitude}`).join(';');
-    
-    // Call OSRM routing API
-    const response = await fetch(
-      `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`,
-      { signal: AbortSignal.timeout(5000) }
-    );
-    
-    if (!response.ok) throw new Error('OSRM API error');
-    
+
+    // Call Backend Proxy
+    const response = await fetch('/api/route', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ coordinates: coords }),
+      signal: AbortSignal.timeout(10000) // 10s timeout
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        alert("⚠️ Backend Error: The '/api/route' endpoint was not found.\n\nPLEASE RESTART YOUR SERVER (node server.js) for the map changes to take effect.");
+      }
+      console.warn('Backend Proxy Error:', response.status);
+      throw new Error('Backend route proxy failed');
+    }
+
     const data = await response.json();
-    
+
     if (data.routes && data.routes[0] && data.routes[0].geometry) {
-      // Convert GeoJSON coordinates to Leaflet format [lat, lng]
+      // Convert GeoJSON coordinates [lon, lat] to Leaflet format [lat, lng]
       return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
     }
   } catch (error) {
     console.warn('Could not fetch OSRM route:', error.message);
   }
-  
+
   return null;
 }
 
@@ -573,15 +756,15 @@ async function drawBeforeRoute() {
 
   // Get actual road geometry from OSRM
   const routeGeometry = await getRouteGeometry(beforeRoutes);
-  
+
   // Draw polyline for before route
   if (routeGeometry && routeGeometry.length > 0) {
     // Use actual road geometry if available
     L.polyline(routeGeometry, {
       color: '#cc0000',
       weight: 6,
-      opacity: 1,
-      dashArray: '8, 4'
+      opacity: 0.6,
+      dashArray: '8, 8'
     }).addTo(featureGroup);
   } else {
     // Fallback to straight lines if API fails
@@ -589,22 +772,30 @@ async function drawBeforeRoute() {
     L.polyline(beforeCoords, {
       color: '#cc0000',
       weight: 6,
-      opacity: 1,
-      dashArray: '8, 4'
+      opacity: 0.6,
+      dashArray: '8, 8'
     }).addTo(featureGroup);
   }
 
   // Add markers for each stop
   beforeRoutes.forEach((route, index) => {
-    L.circleMarker([route.latitude, route.longitude], {
-      radius: 8,
-      fillColor: '#ff6b6b',
-      color: '#fff',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.8
-    })
-      .bindPopup(`<strong>Stop ${index + 1}</strong><br>Before: Qty ${route.quantity}`)
+    // Numbered Marker Icon
+    const numberedIcon = L.divIcon({
+      className: 'map-marker before',
+      html: `<span>${index + 1}</span>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    L.marker([route.latitude, route.longitude], { icon: numberedIcon })
+      .bindTooltip(`
+        <div style="text-align: center;">
+            <strong>Stop ${index + 1}</strong><br>
+            Lat: ${route.latitude}<br>
+            Lng: ${route.longitude}<br>
+            Orders: ${route.quantity}
+        </div>
+      `, { direction: 'top', offset: [0, -10] })
       .addTo(featureGroup);
   });
 
@@ -627,14 +818,14 @@ async function drawAfterRoute() {
 
   // Get actual road geometry from OSRM
   const routeGeometry = await getRouteGeometry(afterRoutes);
-  
+
   // Draw polyline for after route
   if (routeGeometry && routeGeometry.length > 0) {
     // Use actual road geometry if available
     L.polyline(routeGeometry, {
       color: '#00aa00',
       weight: 6,
-      opacity: 1
+      opacity: 0.8
     }).addTo(featureGroup);
   } else {
     // Fallback to straight lines if API fails
@@ -642,21 +833,29 @@ async function drawAfterRoute() {
     L.polyline(afterCoords, {
       color: '#00aa00',
       weight: 6,
-      opacity: 1
+      opacity: 0.8
     }).addTo(featureGroup);
   }
 
   // Add markers for each stop
   afterRoutes.forEach((route, index) => {
-    L.circleMarker([route.latitude, route.longitude], {
-      radius: 8,
-      fillColor: '#51cf66',
-      color: '#fff',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.8
-    })
-      .bindPopup(`<strong>Stop ${index + 1}</strong><br>After: Qty ${route.quantity}`)
+    // Numbered Marker Icon
+    const numberedIcon = L.divIcon({
+      className: 'map-marker after',
+      html: `<span>${index + 1}</span>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    L.marker([route.latitude, route.longitude], { icon: numberedIcon })
+      .bindTooltip(`
+        <div style="text-align: center;">
+            <strong>Stop ${index + 1}</strong><br>
+            Lat: ${route.latitude}<br>
+            Lng: ${route.longitude}<br>
+            Orders: ${route.quantity}
+        </div>
+      `, { direction: 'top', offset: [0, -10] })
       .addTo(featureGroup);
   });
 
@@ -666,13 +865,13 @@ async function drawAfterRoute() {
 
 function toggleMapView(view) {
   currentMapView = view;
-  
+
   // Update button states
   const beforeBtn = document.getElementById('beforeOptBtn');
   const afterBtn = document.getElementById('afterOptBtn');
   const beforeLegend = document.getElementById('beforeLegend');
   const afterLegend = document.getElementById('afterLegend');
-  
+
   if (view === 'before') {
     beforeBtn.classList.add('btn-primary');
     beforeBtn.classList.remove('btn-ghost');
@@ -680,7 +879,7 @@ function toggleMapView(view) {
     afterBtn.classList.add('btn-ghost');
     beforeLegend.style.display = 'flex';
     afterLegend.style.display = 'none';
-    
+
     // Hide after layer, show before layer
     if (afterLayer) leafletMap.removeLayer(afterLayer);
     if (beforeLayer) leafletMap.addLayer(beforeLayer);
@@ -691,7 +890,7 @@ function toggleMapView(view) {
     beforeBtn.classList.add('btn-ghost');
     beforeLegend.style.display = 'none';
     afterLegend.style.display = 'flex';
-    
+
     // Hide before layer, show after layer
     if (beforeLayer) leafletMap.removeLayer(beforeLayer);
     if (afterLayer) leafletMap.addLayer(afterLayer);

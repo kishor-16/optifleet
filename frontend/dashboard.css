@@ -639,3 +639,26 @@
         transform: translateX(100%);
     }
 }
+
+/* Map Markers */
+.map-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 2px solid white;
+}
+
+.map-marker.before {
+    background-color: #cc0000;
+}
+
+.map-marker.after {
+    background-color: #00aa00;
+}

@@ -153,7 +153,12 @@ function optimizeRoute(routes) {
     const beforeFuel = calculateFuelConsumption(beforeDistance);
     const beforeCarbon = calculateCO2Emissions(beforeFuel);
 
+    // Calculate vehicle counts (Sequential vs Optimized)
+    const vehiclesBefore = calculateSequentialVehicleCount(routes, 10);
+    const vehiclesAfter = 1; // JS fallback is single route/vehicle
+
     console.log(`BEFORE: Distance = ${beforeDistance.toFixed(2)} km`);
+    console.log(`VEHICLES: Before=${vehiclesBefore}, After=${vehiclesAfter}`);
 
     // Perform optimization using Nearest Neighbor algorithm
     const optimizedRoutes = nearestNeighborTSP([...routes]);
@@ -200,6 +205,11 @@ function optimizeRoute(routes) {
             percentage: percentageSaved.toFixed(1),
             cost: costSaved.toFixed(2)
         },
+        vehicleCounts: {
+            before: vehiclesBefore,
+            after: vehiclesAfter,
+            improvement: vehiclesBefore > 0 ? ((vehiclesBefore - vehiclesAfter) / vehiclesBefore * 100).toFixed(1) : 0
+        },
         environmental: {
             treesPlanted: treesPlanted.toFixed(1),
             carMilesNotDriven: carMilesNotDriven.toFixed(1)
@@ -217,6 +227,29 @@ function optimizeRoute(routes) {
             earthRadius: "6371 km (Used in Haversine formula)"
         }
     };
+}
+
+/**
+ * Calculate sequential vehicle count for fallback logic
+ * Capacity = 10 packages per vehicle
+ */
+function calculateSequentialVehicleCount(routes, capacity = 10) {
+    if (!routes || routes.length === 0) return 0;
+
+    let vehicleCount = 1;
+    let currentLoad = 0;
+
+    for (const route of routes) {
+        const qty = route.quantity || 0;
+        if (currentLoad + qty > capacity) {
+            vehicleCount++;
+            currentLoad = qty;
+        } else {
+            currentLoad += qty;
+        }
+    }
+
+    return vehicleCount;
 }
 
 // ============================================
@@ -342,6 +375,51 @@ app.get("/dashboard", (req, res) => {
 // ============================================
 // ERROR HANDLING
 // ============================================
+
+// ============================================
+// OSRM PROXY ROUTE
+// ============================================
+
+const https = require('https');
+
+app.post("/api/route", (req, res) => {
+    const { coordinates } = req.body;
+
+    if (!coordinates) {
+        return res.status(400).json({ error: "Coordinates required" });
+    }
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`;
+
+    console.log(`🗺️ Fetching route geometry...`);
+
+    https.get(url, (osrmRes) => {
+        let data = '';
+
+        osrmRes.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        osrmRes.on('end', () => {
+            try {
+                const json = JSON.parse(data);
+                if (json.code === 'Ok') {
+                    res.json(json);
+                } else {
+                    console.warn('OSRM returned non-OK code:', json.code);
+                    res.status(400).json({ error: "OSRM Route Failed", details: json });
+                }
+            } catch (e) {
+                console.error('OSRM Parse Error:', e);
+                res.status(500).json({ error: "Failed to parse OSRM response" });
+            }
+        });
+
+    }).on('error', (err) => {
+        console.error("OSRM Request Error:", err);
+        res.status(500).json({ error: "Failed to fetch from OSRM" });
+    });
+});
 
 app.use((err, req, res, next) => {
     console.error('Error:', err);

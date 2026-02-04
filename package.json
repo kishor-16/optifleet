@@ -5,12 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "nodemon server.js",
-    "client": "npm start --prefix client",
-    "build": "npm run build --prefix client",
-    "install-all": "npm install && cd client && npm install",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client"
+    "dev": "nodemon server.js",
+    "server": "nodemon server.js"
   },
   "keywords": [
     "sustainability",
