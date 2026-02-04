@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const https = require('https');
 const Route = require('../models/Route');
 
 // GET /api/routes - Get all routes
@@ -121,6 +122,57 @@ router.get('/stats/summary', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// POST /api/routes/geometry - Proxy for OSRM road geometry
+router.post('/geometry', async (req, res) => {
+    const { coordinates } = req.body;
+
+    if (!coordinates) {
+        console.warn('⚠️ OSRM Proxy: No coordinates provided');
+        return res.status(400).json({ error: "Coordinates required" });
+    }
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`;
+
+    console.log(`🗺️ OSRM Proxy: Requesting geometry...`);
+
+    const request = https.get(url, (osrmRes) => {
+        let data = '';
+        osrmRes.on('data', (chunk) => { data += chunk; });
+        osrmRes.on('end', () => {
+            if (res.headersSent) return;
+            try {
+                const json = JSON.parse(data);
+                if (json.code === 'Ok') {
+                    console.log(`✅ OSRM Proxy: Successfully fetched geometry`);
+                    res.json(json);
+                } else {
+                    console.warn(`⚠️ OSRM Proxy error: ${json.code}`);
+                    res.status(400).json({ error: "OSRM Route Failed", details: json });
+                }
+            } catch (e) {
+                console.error(`❌ OSRM Proxy parse error: ${e.message}`);
+                res.status(500).json({ error: "Failed to parse OSRM response" });
+            }
+        });
+    });
+
+    request.on('error', (err) => {
+        console.error(`❌ OSRM Proxy network error: ${err.message}`);
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Failed to fetch from OSRM" });
+        }
+    });
+
+    // Set a generous timeout (30s) for the OSRM request
+    request.setTimeout(30000, () => {
+        console.warn('⚠️ OSRM Proxy: API Request timed out after 30s');
+        request.destroy();
+        if (!res.headersSent) {
+            res.status(504).json({ error: "OSRM API Timeout" });
+        }
+    });
 });
 
 module.exports = router;

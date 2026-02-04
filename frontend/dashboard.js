@@ -686,39 +686,49 @@ function updateAnalytics(data) {
 
 // Fetch route geometry from OSRM via Backend Proxy
 async function getRouteGeometry(routePoints) {
-
   if (routePoints.length < 2) return null;
 
   try {
     // Format coordinates for OSRM: lon,lat;lon,lat...
     const coords = routePoints.map(r => `${r.longitude},${r.latitude}`).join(';');
+    console.log('📡 Fetching road geometry for coordinates:', coords);
 
     // Call Backend Proxy
-    const response = await fetch('/api/route', {
+    const response = await fetch('/api/routes/geometry', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ coordinates: coords }),
-      signal: AbortSignal.timeout(10000) // 10s timeout
+      signal: AbortSignal.timeout(35000) // 35s timeout for slow OSRM
     });
 
+    console.log('📡 Proxy response status:', response.status);
+
     if (!response.ok) {
-      if (response.status === 404) {
-        alert("⚠️ Backend Error: The '/api/route' endpoint was not found.\n\nPLEASE RESTART YOUR SERVER (node server.js) for the map changes to take effect.");
+      if (response.status === 504) {
+        console.warn('📡 OSRM service is currently very slow (Timeout). Falling back to straight lines.');
+        showSuccessMessage('📍 Map: Road-following is slow right now. Using direct lines.');
+      } else if (response.status === 404) {
+        alert("⚠️ Backend Error: The '/api/routes/geometry' endpoint was not found.\n\nPLEASE RESTART YOUR SERVER (node server.js).");
+      } else {
+        console.warn('Backend Proxy Error:', response.status);
       }
-      console.warn('Backend Proxy Error:', response.status);
       throw new Error('Backend route proxy failed');
     }
 
     const data = await response.json();
+    console.log('📡 Received OSRM data:', data);
 
     if (data.routes && data.routes[0] && data.routes[0].geometry) {
-      // Convert GeoJSON coordinates [lon, lat] to Leaflet format [lat, lng]
-      return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+      const latLngs = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+      console.log(`✅ Successfully fetched ${latLngs.length} road points.`);
+      return latLngs;
+    } else {
+      console.warn('📡 OSRM data missing routes or geometry:', data);
     }
   } catch (error) {
-    console.warn('Could not fetch OSRM route:', error.message);
+    console.error('❌ Could not fetch OSRM route:', error);
   }
 
   return null;
@@ -755,7 +765,12 @@ async function drawBeforeRoute() {
   const featureGroup = L.featureGroup();
 
   // Get actual road geometry from OSRM
-  const routeGeometry = await getRouteGeometry(beforeRoutes);
+  let routeGeometry = null;
+  try {
+    routeGeometry = await getRouteGeometry(beforeRoutes);
+  } catch (err) {
+    console.warn('Falling back to straight lines for Before route');
+  }
 
   // Draw polyline for before route
   if (routeGeometry && routeGeometry.length > 0) {
@@ -817,7 +832,12 @@ async function drawAfterRoute() {
   const featureGroup = L.featureGroup();
 
   // Get actual road geometry from OSRM
-  const routeGeometry = await getRouteGeometry(afterRoutes);
+  let routeGeometry = null;
+  try {
+    routeGeometry = await getRouteGeometry(afterRoutes);
+  } catch (err) {
+    console.warn('Falling back to straight lines for After route');
+  }
 
   // Draw polyline for after route
   if (routeGeometry && routeGeometry.length > 0) {

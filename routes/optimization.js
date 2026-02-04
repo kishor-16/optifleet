@@ -147,7 +147,8 @@ function runPythonOptimizer(routes) {
                             optimizer: result.optimizer,
                             optimizedRoutes: result.optimizedRoutes,
                             clusters: result.clusters,
-                            vehicles: result.vehicles
+                            vehicles: result.vehicles,
+                            vehicleCounts: result.vehicleCounts
                         });
                     } else {
                         reject(new Error(result.error || 'Unknown error'));

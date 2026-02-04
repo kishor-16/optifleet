@@ -19,10 +19,10 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
-            imgSrc: ["'self'", "data:", "https:", "http:"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "https:", "http:", "https://*.tile.openstreetmap.org"],
             fontSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
-            connectSrc: ["'self'", "https://tile.openstreetmap.org", "https://router.project-osrm.org", "https://api.mapbox.com"],
+            connectSrc: ["'self'", "https://tile.openstreetmap.org", "https://router.project-osrm.org", "https://api.mapbox.com", "https://cdn.jsdelivr.net"],
         }
     }
 }));
@@ -69,7 +69,6 @@ app.use('/api/optimize', optimizationRoutes);
 app.use('/api/routes', routeRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
