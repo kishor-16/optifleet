@@ -4,6 +4,7 @@
 
 let routes = [];
 let optimizationResults = null;
+let currentMapView = 'before'; // Track which route is currently displayed
 
 // Backend API URL (use relative path so frontend follows the server origin)
 const API_URL = '/api';
@@ -397,6 +398,7 @@ function displayResults(data) {
   const mapSection = document.getElementById('mapSection');
   if (mapSection) {
     mapSection.style.display = 'block';
+    currentMapView = 'before'; // Reset to before view
     
     // Initialize map asynchronously
     setTimeout(async () => {
@@ -405,10 +407,36 @@ function displayResults(data) {
       await drawAfterRoute();
       updateMapStats();
       
-      // Fit map to bounds
+      // Show only before route initially
+      if (beforeLayer && afterLayer) {
+        leafletMap.removeLayer(afterLayer);
+      }
+      
+      // Fit map to before route bounds
       if (leafletMap && beforeLayer) {
-        const group = new L.featureGroup([beforeLayer, afterLayer]);
-        leafletMap.fitBounds(group.getBounds().pad(0.1));
+        leafletMap.fitBounds(beforeLayer.getBounds().pad(0.1));
+      }
+      
+      // Add button event listeners
+      const beforeBtn = document.getElementById('beforeOptBtn');
+      const afterBtn = document.getElementById('afterOptBtn');
+      
+      if (beforeBtn) {
+        beforeBtn.addEventListener('click', () => {
+          toggleMapView('before');
+          if (leafletMap && beforeLayer) {
+            leafletMap.fitBounds(beforeLayer.getBounds().pad(0.1));
+          }
+        });
+      }
+      
+      if (afterBtn) {
+        afterBtn.addEventListener('click', () => {
+          toggleMapView('after');
+          if (leafletMap && afterLayer) {
+            leafletMap.fitBounds(afterLayer.getBounds().pad(0.1));
+          }
+        });
       }
     }, 500);
   }
@@ -634,6 +662,40 @@ async function drawAfterRoute() {
 
   afterLayer = featureGroup;
   featureGroup.addTo(leafletMap);
+}
+
+function toggleMapView(view) {
+  currentMapView = view;
+  
+  // Update button states
+  const beforeBtn = document.getElementById('beforeOptBtn');
+  const afterBtn = document.getElementById('afterOptBtn');
+  const beforeLegend = document.getElementById('beforeLegend');
+  const afterLegend = document.getElementById('afterLegend');
+  
+  if (view === 'before') {
+    beforeBtn.classList.add('btn-primary');
+    beforeBtn.classList.remove('btn-ghost');
+    afterBtn.classList.remove('btn-primary');
+    afterBtn.classList.add('btn-ghost');
+    beforeLegend.style.display = 'flex';
+    afterLegend.style.display = 'none';
+    
+    // Hide after layer, show before layer
+    if (afterLayer) leafletMap.removeLayer(afterLayer);
+    if (beforeLayer) leafletMap.addLayer(beforeLayer);
+  } else {
+    afterBtn.classList.add('btn-primary');
+    afterBtn.classList.remove('btn-ghost');
+    beforeBtn.classList.remove('btn-primary');
+    beforeBtn.classList.add('btn-ghost');
+    beforeLegend.style.display = 'none';
+    afterLegend.style.display = 'flex';
+    
+    // Hide before layer, show after layer
+    if (beforeLayer) leafletMap.removeLayer(beforeLayer);
+    if (afterLayer) leafletMap.addLayer(afterLayer);
+  }
 }
 
 function updateMapStats() {

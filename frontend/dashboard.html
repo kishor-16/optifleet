@@ -242,14 +242,25 @@
                         Route Visualization
                     </h3>
 
-                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
-                        <div style="flex: 1; display: flex; align-items: center; gap: var(--spacing-sm);">
-                            <div style="width: 16px; height: 16px; background-color: #ff6b6b; border-radius: 50%;"></div>
-                            <span>Before Optimization (Inefficient)</span>
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
+                        <button id="beforeOptBtn" class="btn btn-primary" style="flex: 1; min-width: 200px;">
+                            <span style="margin-right: var(--spacing-xs);">📍</span>
+                            <span>Before Optimization</span>
+                        </button>
+                        <button id="afterOptBtn" class="btn btn-ghost" style="flex: 1; min-width: 200px;">
+                            <span style="margin-right: var(--spacing-xs);">✅</span>
+                            <span>After Optimization</span>
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md); font-size: var(--font-size-sm);">
+                        <div id="beforeLegend" style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                            <div style="width: 16px; height: 16px; background-color: #cc0000; border-radius: 50%;"></div>
+                            <span>Before Route (Inefficient)</span>
                         </div>
-                        <div style="flex: 1; display: flex; align-items: center; gap: var(--spacing-sm);">
-                            <div style="width: 16px; height: 16px; background-color: #51cf66; border-radius: 50%;"></div>
-                            <span>After Optimization (Optimized)</span>
+                        <div id="afterLegend" style="display: none; flex: 1; display: flex; align-items: center; gap: var(--spacing-sm);">
+                            <div style="width: 16px; height: 16px; background-color: #00aa00; border-radius: 50%;"></div>
+                            <span>After Route (Optimized)</span>
                         </div>
                     </div>
 
