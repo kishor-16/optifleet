@@ -337,6 +337,56 @@
     color: var(--color-success);
 }
 
+/* Map Container */
+#mapContainer {
+    width: 100%;
+    height: 500px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    z-index: 0;
+}
+
+/* Leaflet Map Styles */
+#mapContainer .leaflet-container {
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#mapContainer .leaflet-control {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+#mapContainer .leaflet-control a {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-tertiary);
+    border: none;
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+}
+
+#mapContainer .leaflet-control a:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+#mapContainer .leaflet-popup-content-wrapper {
+    background-color: var(--color-bg-primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+}
+
+#mapContainer .leaflet-popup-content {
+    color: var(--color-text-primary);
+    margin: 8px;
+    font-size: var(--font-size-sm);
+}
+
 /* Map Placeholder */
 .map-placeholder {
     background: var(--color-bg-tertiary);

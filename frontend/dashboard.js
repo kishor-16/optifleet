@@ -5,8 +5,33 @@
 let routes = [];
 let optimizationResults = null;
 
-// Backend API URL
-const API_URL = 'http://localhost:3000/api';
+// Backend API URL (use relative path so frontend follows the server origin)
+const API_URL = '/api';
+
+// Leaflet Map Configuration
+let leafletMap = null;
+let beforeLayer = null;
+let afterLayer = null;
+
+// Load Leaflet CSS and JS dynamically if not already loaded
+function ensureLeaflet() {
+    if (typeof L === 'undefined') {
+        // Load Leaflet CSS
+        const leafletCSS = document.createElement('link');
+        leafletCSS.rel = 'stylesheet';
+        leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCSS);
+
+        // Load Leaflet JS
+        return new Promise((resolve) => {
+            const leafletScript = document.createElement('script');
+            leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            leafletScript.onload = resolve;
+            document.head.appendChild(leafletScript);
+        });
+    }
+    return Promise.resolve();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🚚 OptiFleet Dashboard Loaded');
@@ -33,6 +58,17 @@ function initDashboard() {
         showSuccessMessage('Dashboard refreshed!');
       }, 1000);
     });
+  }
+
+  // Attach event listeners for sample data and clear buttons
+  const loadSampleBtn = document.getElementById('loadSampleBtn');
+  if (loadSampleBtn) {
+    loadSampleBtn.addEventListener('click', loadSampleData);
+  }
+
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', clearAllRoutes);
   }
 
   const sidebarLinks = document.querySelectorAll('.sidebar-link');
@@ -232,6 +268,9 @@ function initOptimization() {
       console.log('✅ Optimization complete!');
       console.log('Results:', data);
 
+      // Store original routes as beforeRoutes for map visualization
+      data.beforeRoutes = routes;
+      
       optimizationResults = data;
 
       displayResults(data);
@@ -353,6 +392,26 @@ function displayResults(data) {
             <div class="impact-value">${routes.reduce((sum, r) => sum + r.quantity, 0)}</div>
         </div>
     `;
+
+  // Initialize and display the map
+  const mapSection = document.getElementById('mapSection');
+  if (mapSection) {
+    mapSection.style.display = 'block';
+    
+    // Initialize map asynchronously
+    setTimeout(async () => {
+      await initMap();
+      drawBeforeRoute();
+      drawAfterRoute();
+      updateMapStats();
+      
+      // Fit map to bounds
+      if (leafletMap && beforeLayer) {
+        const group = new L.featureGroup([beforeLayer, afterLayer]);
+        leafletMap.fitBounds(group.getBounds().pad(0.1));
+      }
+    }, 500);
+  }
 }
 
 function hideResults() {
@@ -421,6 +480,126 @@ function showSuccessMessage(message) {
 
 // ============================================
 // CONSOLE BRANDING
+// ============================================
+// MAP VISUALIZATION
+// ============================================
+
+async function initMap() {
+  await ensureLeaflet();
+
+  const mapContainer = document.getElementById('mapContainer');
+  if (!mapContainer) return;
+
+  // Initialize map centered on NYC
+  leafletMap = L.map('mapContainer').setView([40.7128, -74.0060], 11);
+
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(leafletMap);
+}
+
+function drawBeforeRoute() {
+  if (!leafletMap || !optimizationResults) return;
+
+  if (beforeLayer) {
+    leafletMap.removeLayer(beforeLayer);
+  }
+
+  const beforeRoutes = optimizationResults.beforeRoutes || routes;
+  if (beforeRoutes.length < 2) return;
+
+  // Create a feature group for the before route
+  const featureGroup = L.featureGroup();
+
+  // Draw polyline for before route
+  const beforeCoords = beforeRoutes.map(r => [r.latitude, r.longitude]);
+  L.polyline(beforeCoords, {
+    color: '#ff6b6b',
+    weight: 3,
+    opacity: 0.7,
+    dashArray: '5, 5'
+  }).addTo(featureGroup);
+
+  // Add markers for each stop
+  beforeRoutes.forEach((route, index) => {
+    L.circleMarker([route.latitude, route.longitude], {
+      radius: 8,
+      fillColor: '#ff6b6b',
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    })
+      .bindPopup(`<strong>Stop ${index + 1}</strong><br>Before: Qty ${route.quantity}`)
+      .addTo(featureGroup);
+  });
+
+  beforeLayer = featureGroup;
+  featureGroup.addTo(leafletMap);
+}
+
+function drawAfterRoute() {
+  if (!leafletMap || !optimizationResults) return;
+
+  if (afterLayer) {
+    leafletMap.removeLayer(afterLayer);
+  }
+
+  const afterRoutes = optimizationResults.optimizedRoutes || [];
+  if (afterRoutes.length < 2) return;
+
+  // Create a feature group for the after route
+  const featureGroup = L.featureGroup();
+
+  // Draw polyline for after route
+  const afterCoords = afterRoutes.map(r => [r.latitude, r.longitude]);
+  L.polyline(afterCoords, {
+    color: '#51cf66',
+    weight: 3,
+    opacity: 0.9
+  }).addTo(featureGroup);
+
+  // Add markers for each stop
+  afterRoutes.forEach((route, index) => {
+    L.circleMarker([route.latitude, route.longitude], {
+      radius: 8,
+      fillColor: '#51cf66',
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    })
+      .bindPopup(`<strong>Stop ${index + 1}</strong><br>After: Qty ${route.quantity}`)
+      .addTo(featureGroup);
+  });
+
+  afterLayer = featureGroup;
+  featureGroup.addTo(leafletMap);
+}
+
+function updateMapStats() {
+  if (!optimizationResults) return;
+
+  const statsDiv = document.getElementById('mapStats');
+  if (statsDiv) {
+    statsDiv.innerHTML = `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+        <div>
+          <strong style="color: #ff6b6b;">Before:</strong> ${optimizationResults.before.distance} km
+        </div>
+        <div>
+          <strong style="color: #51cf66;">After:</strong> ${optimizationResults.after.distance} km
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <strong>Savings:</strong> ${optimizationResults.savings.distance} km (${optimizationResults.savings.percentage}%)
+        </div>
+      </div>
+    `;
+  }
+}
+
 // ============================================
 
 console.log(

@@ -148,11 +148,11 @@
                                 Quick Presets
                             </h4>
                             <div style="display: flex; gap: var(--spacing-xs); flex-wrap: wrap;">
-                                <button class="btn btn-ghost btn-sm" onclick="loadSampleData()">
+                                <button id="loadSampleBtn" class="btn btn-ghost btn-sm">
                                     <span>📋</span>
                                     <span>Load Sample</span>
                                 </button>
-                                <button class="btn btn-ghost btn-sm" onclick="clearAllRoutes()">
+                                <button id="clearAllBtn" class="btn btn-ghost btn-sm">
                                     <span>🗑️</span>
                                     <span>Clear All</span>
                                 </button>
@@ -234,27 +234,33 @@
                 </div>
             </section>
 
-            <!-- Live Route Map Visualization (Placeholder) -->
-            <section class="dashboard-section">
+            <!-- Live Route Map Visualization -->
+            <section class="dashboard-section" id="mapSection" style="display: none;">
                 <div class="card">
                     <h3 style="margin-bottom: var(--spacing-lg); font-size: var(--font-size-xl);">
                         <span style="margin-right: var(--spacing-xs);">🗺️</span>
                         Route Visualization
                     </h3>
 
-                    <div class="map-placeholder">
-                        <div style="text-align: center; padding: var(--spacing-3xl);">
-                            <div style="font-size: var(--font-size-4xl); margin-bottom: var(--spacing-md);">🗺️</div>
-                            <h4 style="margin-bottom: var(--spacing-sm);">Interactive Map Coming Soon</h4>
-                            <p style="color: var(--color-text-secondary);">
-                                Real-time route visualization with clustering and optimization overlay
-                            </p>
-                            <div
-                                style="margin-top: var(--spacing-lg); display: flex; gap: var(--spacing-sm); justify-content: center; flex-wrap: wrap;">
-                                <span class="badge">Leaflet.js Integration</span>
-                                <span class="badge">Real-time Updates</span>
-                                <span class="badge">Traffic Overlay</span>
-                            </div>
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                        <div style="flex: 1; display: flex; align-items: center; gap: var(--spacing-sm);">
+                            <div style="width: 16px; height: 16px; background-color: #ff6b6b; border-radius: 50%;"></div>
+                            <span>Before Optimization (Inefficient)</span>
+                        </div>
+                        <div style="flex: 1; display: flex; align-items: center; gap: var(--spacing-sm);">
+                            <div style="width: 16px; height: 16px; background-color: #51cf66; border-radius: 50%;"></div>
+                            <span>After Optimization (Optimized)</span>
+                        </div>
+                    </div>
+
+                    <div id="mapContainer" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background-color: var(--color-bg-secondary);">
+                        <!-- Map will be initialized here -->
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background-color: var(--color-bg-tertiary); border-radius: 8px; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        <strong>Route Details:</strong><br>
+                        <div id="mapStats" style="margin-top: var(--spacing-sm);">
+                            <!-- Stats will be populated by JavaScript -->
                         </div>
                     </div>
                 </div>

@@ -13,7 +13,19 @@ const app = express();
 // MIDDLEWARE
 // ============================================
 
-app.use(helmet());
+// Helmet with custom CSP to allow Leaflet and mapping services
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+            imgSrc: ["'self'", "data:", "https:", "http:"],
+            fontSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+            connectSrc: ["'self'", "https://tile.openstreetmap.org", "https://router.project-osrm.org", "https://api.mapbox.com"],
+        }
+    }
+}));
 app.use(compression());
 app.use(cors());
 app.use(express.json());
