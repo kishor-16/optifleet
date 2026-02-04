@@ -493,10 +493,11 @@ async function initMap() {
   // Initialize map centered on NYC
   leafletMap = L.map('mapContainer').setView([40.7128, -74.0060], 11);
 
-  // Add OpenStreetMap tiles
+  // Add OpenStreetMap tiles with reduced opacity for lighter appearance
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
+    maxZoom: 19,
+    opacity: 0.5
   }).addTo(leafletMap);
 }
 
@@ -516,10 +517,10 @@ function drawBeforeRoute() {
   // Draw polyline for before route
   const beforeCoords = beforeRoutes.map(r => [r.latitude, r.longitude]);
   L.polyline(beforeCoords, {
-    color: '#ff6b6b',
-    weight: 3,
-    opacity: 0.7,
-    dashArray: '5, 5'
+    color: '#cc0000',
+    weight: 6,
+    opacity: 1,
+    dashArray: '8, 4'
   }).addTo(featureGroup);
 
   // Add markers for each stop
@@ -556,9 +557,9 @@ function drawAfterRoute() {
   // Draw polyline for after route
   const afterCoords = afterRoutes.map(r => [r.latitude, r.longitude]);
   L.polyline(afterCoords, {
-    color: '#51cf66',
-    weight: 3,
-    opacity: 0.9
+    color: '#00aa00',
+    weight: 6,
+    opacity: 1
   }).addTo(featureGroup);
 
   // Add markers for each stop
