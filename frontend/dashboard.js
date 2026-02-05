@@ -794,39 +794,52 @@ async function getRouteGeometry(routePoints) {
     console.log('📡 Fetching road geometry for coordinates:', coords);
 
     // Call Backend Proxy
-    const response = await fetch('/api/routes/geometry', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ coordinates: coords }),
-      signal: AbortSignal.timeout(35000) // 35s timeout for slow OSRM
-    });
+    try {
+      const response = await fetch('/api/routes/geometry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coordinates: coords }),
+        signal: AbortSignal.timeout(15000) // 15s timeout for proxy
+      });
 
-    console.log('📡 Proxy response status:', response.status);
-
-    if (!response.ok) {
-      if (response.status === 504) {
-        console.warn('📡 OSRM service is currently very slow (Timeout). Falling back to straight lines.');
-        showSuccessMessage('📍 Map: Road-following is slow right now. Using direct lines.');
-      } else if (response.status === 404) {
-        alert("⚠️ Backend Error: The '/api/routes/geometry' endpoint was not found.\n\nPLEASE RESTART YOUR SERVER (node server.js).");
-      } else {
-        console.warn('Backend Proxy Error:', response.status);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.routes && data.routes[0]) {
+          const route = data.routes[0];
+          const latLngs = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+          return {
+            points: latLngs,
+            distance: (route.distance / 1000).toFixed(2),
+            duration: Math.round(route.duration / 60)
+          };
+        }
       }
-      throw new Error('Backend route proxy failed');
+      console.warn('📡 Proxy call failed or returned invalid data, trying direct OSRM...');
+    } catch (e) {
+      console.warn('📡 Proxy call failed:', e.message);
     }
 
-    const data = await response.json();
-    console.log('📡 Received OSRM data:', data);
-
-    if (data.routes && data.routes[0] && data.routes[0].geometry) {
-      const latLngs = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-      console.log(`✅ Successfully fetched ${latLngs.length} road points.`);
-      return latLngs;
-    } else {
-      console.warn('📡 OSRM data missing routes or geometry:', data);
+    // Direct Fallback to Public OSRM
+    try {
+      const directUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+      const response = await fetch(directUrl, { signal: AbortSignal.timeout(10000) });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.code === 'Ok' && data.routes && data.routes[0]) {
+          const route = data.routes[0];
+          const latLngs = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+          console.log('✅ Direct OSRM fallback successful!');
+          return {
+            points: latLngs,
+            distance: (route.distance / 1000).toFixed(2),
+            duration: Math.round(route.duration / 60)
+          };
+        }
+      }
+    } catch (e) {
+      console.error('❌ Direct OSRM fallback also failed:', e.message);
     }
+
   } catch (error) {
     console.error('❌ Could not fetch OSRM route:', error);
   }
@@ -872,15 +885,17 @@ async function drawBeforeRoute() {
     console.warn('Falling back to straight lines for Before route');
   }
 
-  // Draw polyline for before route
-  if (routeGeometry && routeGeometry.length > 0) {
+  // Polyline for before route
+  if (routeGeometry && routeGeometry.points.length > 0) {
     // Use actual road geometry if available
-    L.polyline(routeGeometry, {
+    const polyline = L.polyline(routeGeometry.points, {
       color: '#cc0000',
       weight: 6,
       opacity: 0.6,
       dashArray: '8, 8'
     }).addTo(featureGroup);
+
+    polyline.bindTooltip(`Before: ${routeGeometry.distance} km, ~${routeGeometry.duration} min`, { sticky: true });
   } else {
     // Fallback to straight lines if API fails
     const beforeCoords = beforeRoutes.map(r => [r.latitude, r.longitude]);
@@ -939,14 +954,16 @@ async function drawAfterRoute() {
     console.warn('Falling back to straight lines for After route');
   }
 
-  // Draw polyline for after route
-  if (routeGeometry && routeGeometry.length > 0) {
+  // Polyline for after route
+  if (routeGeometry && routeGeometry.points.length > 0) {
     // Use actual road geometry if available
-    L.polyline(routeGeometry, {
+    const polyline = L.polyline(routeGeometry.points, {
       color: '#00aa00',
       weight: 6,
       opacity: 0.8
     }).addTo(featureGroup);
+
+    polyline.bindTooltip(`Optimized: ${routeGeometry.distance} km, ~${routeGeometry.duration} min`, { sticky: true });
   } else {
     // Fallback to straight lines if API fails
     const afterCoords = afterRoutes.map(r => [r.latitude, r.longitude]);

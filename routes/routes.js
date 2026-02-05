@@ -165,17 +165,29 @@ router.post('/geometry', async (req, res) => {
 
     const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`;
 
-    console.log(`🗺️ OSRM Proxy: Requesting geometry...`);
+    console.log(`🗺️ OSRM Proxy: Requesting geometry for ${coordinates.split(';').length} points...`);
 
-    const request = https.get(url, (osrmRes) => {
+    const options = {
+        headers: {
+            'User-Agent': 'OptiFleet-Delivery-Optimizer/2.0 (Express/Node.js)'
+        },
+        timeout: 30000
+    };
+
+    const request = https.get(url, options, (osrmRes) => {
         let data = '';
         osrmRes.on('data', (chunk) => { data += chunk; });
         osrmRes.on('end', () => {
             if (res.headersSent) return;
             try {
+                if (osrmRes.statusCode !== 200) {
+                    console.warn(`⚠️ OSRM Proxy: External API returned status ${osrmRes.statusCode}`);
+                    return res.status(osrmRes.statusCode).json({ error: "OSRM API Error", status: osrmRes.statusCode });
+                }
+
                 const json = JSON.parse(data);
                 if (json.code === 'Ok') {
-                    console.log(`✅ OSRM Proxy: Successfully fetched geometry`);
+                    console.log(`✅ OSRM Proxy: Successfully fetched geometry (${(json.routes[0].distance / 1000).toFixed(2)} km)`);
                     res.json(json);
                 } else {
                     console.warn(`⚠️ OSRM Proxy error: ${json.code}`);
@@ -183,6 +195,7 @@ router.post('/geometry', async (req, res) => {
                 }
             } catch (e) {
                 console.error(`❌ OSRM Proxy parse error: ${e.message}`);
+                console.error('Data received:', data.substring(0, 100));
                 res.status(500).json({ error: "Failed to parse OSRM response" });
             }
         });
