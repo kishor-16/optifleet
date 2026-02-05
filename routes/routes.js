@@ -1,12 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const https = require('https');
+const mongoose = require('mongoose');
 const Route = require('../models/Route');
 
 // GET /api/routes - Get all routes
 router.get('/', async (req, res) => {
     try {
         const { status, optimized, limit = 50, page = 1 } = req.query;
+
+        // Check if MongoDB is connected to avoid buffering timeout
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({
+                error: "Database disconnected",
+                message: "The server is currently unable to reach the database. Please ensure MongoDB is running."
+            });
+        }
 
         const query = {};
         if (status) query.status = status;
@@ -35,6 +44,10 @@ router.get('/', async (req, res) => {
 // GET /api/routes/:id - Get single route
 router.get('/:id', async (req, res) => {
     try {
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
         const route = await Route.findById(req.params.id);
 
         if (!route) {
@@ -50,6 +63,10 @@ router.get('/:id', async (req, res) => {
 // POST /api/routes - Create new route
 router.post('/', async (req, res) => {
     try {
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
         const route = new Route(req.body);
         await route.save();
 
@@ -62,6 +79,10 @@ router.post('/', async (req, res) => {
 // PUT /api/routes/:id - Update route
 router.put('/:id', async (req, res) => {
     try {
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
         const route = await Route.findByIdAndUpdate(
             req.params.id,
             req.body,
@@ -81,6 +102,10 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/routes/:id - Delete route
 router.delete('/:id', async (req, res) => {
     try {
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
         const route = await Route.findByIdAndDelete(req.params.id);
 
         if (!route) {
@@ -96,6 +121,11 @@ router.delete('/:id', async (req, res) => {
 // GET /api/routes/stats/summary - Get route statistics
 router.get('/stats/summary', async (req, res) => {
     try {
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
+
         const totalRoutes = await Route.countDocuments();
         const optimizedRoutes = await Route.countDocuments({ optimized: true });
 

@@ -101,31 +101,36 @@ def simple_clustering(routes: List[Dict], num_clusters: int = 2) -> Dict[int, Li
 def assign_vehicles(clusters: Dict[int, List[Dict]]) -> Dict[int, Dict]:
     """
     Assign appropriate vehicles to clusters based on load
-    Strict capacity: 10 per vehicle
+    Vans: Cap 10, Trucks: Cap 30
     """
-    # Strict vehicle capacity as requested
-    MAX_CAPACITY = 10
+    VAN_CAPACITY = 10
+    TRUCK_CAPACITY = 30
     
     assignments = {}
     
     for cluster_id, cluster_routes in clusters.items():
         total_load = sum(route.get('quantity', 0) for route in cluster_routes)
         
-        # Calculate how many vehicles are actually needed for this cluster
-        # Optimally we want 1 vehicle per cluster if clustering worked perfectly
-        # But if total_load > 10, we conceptually need more, but here we just report the stats
-        # The prompt says "first vehicle can takeover those 4 and make... 10".
-        # So we assume the optimizer TRIED to make clusters of size <= 10.
+        # Decide vehicle type based on load
+        if total_load > VAN_CAPACITY:
+            v_type = "Heavy Truck"
+            v_capacity = TRUCK_CAPACITY
+            v_name = f"TRUCK-{cluster_id+1}"
+        else:
+            v_type = "Standard Van"
+            v_capacity = VAN_CAPACITY
+            v_name = f"VAN-{cluster_id+1}"
         
-        vehicles_needed = math.ceil(total_load / MAX_CAPACITY)
+        # Calculate how many vehicles are actually needed for this cluster
+        vehicles_needed = math.ceil(total_load / v_capacity)
         if vehicles_needed == 0: vehicles_needed = 1
         
         assignments[cluster_id] = {
-            "vehicle": f"VAN-{cluster_id+1}",
-            "type": "Standard Van",
-            "capacity": MAX_CAPACITY,
+            "vehicle": v_name,
+            "type": v_type,
+            "capacity": v_capacity,
             "load": total_load,
-            "utilization": round((total_load / (vehicles_needed * MAX_CAPACITY)) * 100, 1),
+            "utilization": round((total_load / (vehicles_needed * v_capacity)) * 100, 1),
             "vehicle_count_for_cluster": vehicles_needed
         }
     

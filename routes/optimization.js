@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { spawn } = require('child_process');
 const path = require('path');
+const mongoose = require('mongoose');
 const Route = require('../models/Route');
 
 // ============================================
@@ -198,7 +199,7 @@ router.post('/', async (req, res) => {
         }
 
         // Save to database if requested
-        if (saveToDatabase && Route) {
+        if (saveToDatabase && Route && mongoose.connection.readyState === 1) {
             try {
                 const newRoute = new Route({
                     name: routeName || `Route ${new Date().toISOString()}`,

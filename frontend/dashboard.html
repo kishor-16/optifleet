@@ -150,14 +150,21 @@
                             <div style="margin-top: var(--spacing-lg);">
                                 <h4
                                     style="margin-bottom: var(--spacing-sm); color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: 600; text-transform: uppercase;">
-                                    Quick Presets
+                                    Load Sample Data
                                 </h4>
                                 <div style="display: flex; gap: var(--spacing-xs); flex-wrap: wrap;">
-                                    <button id="loadSampleBtn" class="btn btn-ghost btn-sm">
-                                        <span>📋</span>
-                                        <span>Load Sample</span>
-                                    </button>
-                                    <button id="clearAllBtn" class="btn btn-ghost btn-sm">
+                                    <button class="btn btn-ghost btn-sm load-sample-btn" data-count="3">📍 3
+                                        Stops</button>
+                                    <button class="btn btn-ghost btn-sm load-sample-btn" data-count="4">📍 4
+                                        Stops</button>
+                                    <button class="btn btn-ghost btn-sm load-sample-btn" data-count="5">📍 5
+                                        Stops</button>
+                                    <button class="btn btn-ghost btn-sm load-sample-btn" data-count="6">📍 6
+                                        Stops</button>
+                                    <button class="btn btn-ghost btn-sm load-sample-btn" data-count="7">📍 7
+                                        Stops</button>
+                                    <button id="clearAllBtn" class="btn btn-ghost btn-sm"
+                                        style="border-color: var(--color-error); color: var(--color-error);">
                                         <span>🗑️</span>
                                         <span>Clear All</span>
                                     </button>
@@ -388,28 +395,52 @@
             <div id="panel-orders" class="dashboard-panel" style="display: none;">
                 <section class="dashboard-section">
                     <div class="card">
-                        <h3>Orders</h3>
-                        <p>Orders panel visualization coming soon.</p>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+                            <div>
+                                <h3>Optimization History</h3>
+                                <p style="color: var(--color-text-secondary);">View and tracks your previous delivery
+                                    optimizations</p>
+                            </div>
+                            <button id="refreshHistoryBtn" class="btn btn-secondary btn-sm">
+                                <span>🔄</span> Refresh History
+                            </button>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--color-bg-tertiary); text-align: left;">
+                                        <th style="padding: var(--spacing-sm);">Date</th>
+                                        <th style="padding: var(--spacing-sm);">Name</th>
+                                        <th style="padding: var(--spacing-sm);">Locations</th>
+                                        <th style="padding: var(--spacing-sm);">Vehicles</th>
+                                        <th style="padding: var(--spacing-sm);">Savings</th>
+                                        <th style="padding: var(--spacing-sm);">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderHistoryTableBody">
+                                    <tr>
+                                        <td colspan="6"
+                                            style="padding: var(--spacing-xl); text-align: center; color: var(--color-text-muted);">
+                                            No optimization history found. Run an optimization to see it here.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
             </div>
             <div id="panel-analytics" class="dashboard-panel" style="display: none;">
                 <section class="dashboard-section">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
                         <div class="card">
-                            <h3>Carbon Emissions Analysis</h3>
+                            <h3>Carbon Emission Analysis</h3>
                             <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">Comparison
                                 of Total CO₂ Emissions (kg)</p>
-                            <div style="height: 300px; width: 100%;">
+                            <div style="height: 400px; width: 100%;">
                                 <canvas id="carbonChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <h3>Fleet Optimization Analysis</h3>
-                            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">Comparison
-                                of Vehicles Required</p>
-                            <div style="height: 300px; width: 100%;">
-                                <canvas id="vehicleChart"></canvas>
                             </div>
                         </div>
                     </div>

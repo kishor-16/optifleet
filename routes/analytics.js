@@ -2,11 +2,17 @@ const express = require('express');
 const router = express.Router();
 const Analytics = require('../models/Analytics');
 const Route = require('../models/Route');
+const mongoose = require('mongoose');
 
 // GET /api/analytics/dashboard - Get dashboard analytics
 router.get('/dashboard', async (req, res) => {
     try {
         const { period = 'daily', days = 30 } = req.query;
+
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
 
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - parseInt(days));
@@ -36,6 +42,10 @@ router.get('/dashboard', async (req, res) => {
 // GET /api/analytics/trends - Get optimization trends
 router.get('/trends', async (req, res) => {
     try {
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
         const { days = 30 } = req.query;
 
         const startDate = new Date();
@@ -78,6 +88,10 @@ router.get('/trends', async (req, res) => {
 // GET /api/analytics/impact - Get environmental impact
 router.get('/impact', async (req, res) => {
     try {
+        // Check connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ error: "Database disconnected" });
+        }
         const routes = await Route.find({ optimized: true });
 
         const totalImpact = routes.reduce((acc, route) => {

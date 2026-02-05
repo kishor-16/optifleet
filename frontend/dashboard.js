@@ -68,15 +68,23 @@ function initDashboard() {
     });
   }
 
-  // Attach event listeners for sample data and clear buttons
-  const loadSampleBtn = document.getElementById('loadSampleBtn');
-  if (loadSampleBtn) {
-    loadSampleBtn.addEventListener('click', loadSampleData);
-  }
+  // Attach event listeners for multiple sample data buttons
+  const sampleBtns = document.querySelectorAll('.load-sample-btn');
+  sampleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const count = parseInt(btn.getAttribute('data-count'));
+      loadSampleData(count);
+    });
+  });
 
   const clearAllBtn = document.getElementById('clearAllBtn');
   if (clearAllBtn) {
     clearAllBtn.addEventListener('click', clearAllRoutes);
+  }
+
+  const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+  if (refreshHistoryBtn) {
+    refreshHistoryBtn.addEventListener('click', fetchOrderHistory);
   }
 
   // Sidebar Panel Navigation
@@ -103,6 +111,11 @@ function showPanel(panelId) {
   const targetPanel = document.getElementById(panelId);
   if (targetPanel) {
     targetPanel.style.display = 'block';
+
+    // Load history if joining orders panel
+    if (panelId === 'panel-orders') {
+      fetchOrderHistory();
+    }
   }
 
   // Update Sidebar Active State
@@ -246,22 +259,23 @@ function updateOptimizeButton() {
 // SAMPLE DATA
 // ============================================
 
-window.loadSampleData = function () {
-  // Deliberately inefficient route - locations jump all over NYC
-  // This will show CLEAR optimization results!
-  routes = [
-    { id: Date.now() + 1, latitude: 40.7128, longitude: -74.0060, quantity: 5 },  // Lower Manhattan
-    { id: Date.now() + 2, latitude: 40.8584, longitude: -73.9285, quantity: 5 },  // Bronx (FAR NORTH)
-    { id: Date.now() + 3, latitude: 40.7489, longitude: -73.9680, quantity: 8 },  // Midtown
-    { id: Date.now() + 4, latitude: 40.6782, longitude: -73.9442, quantity: 7 },  // Brooklyn (FAR SOUTH)
-    { id: Date.now() + 5, latitude: 40.7614, longitude: -73.9776, quantity: 4 },  // Central Park
-    { id: Date.now() + 6, latitude: 40.7282, longitude: -73.7949, quantity: 6 },  // Queens (FAR EAST)
-    { id: Date.now() + 7, latitude: 40.7580, longitude: -73.9855, quantity: 3 }   // Times Square
+window.loadSampleData = function (count = 7) {
+  const allSamples = [
+    { id: 1, latitude: 40.7128, longitude: -74.0060, quantity: 5 },  // Depot
+    { id: 2, latitude: 40.7489, longitude: -73.9680, quantity: 8 },  // Midtown
+    { id: 3, latitude: 40.7614, longitude: -73.9776, quantity: 4 },  // Central Park
+    { id: 4, latitude: 40.7580, longitude: -73.9855, quantity: 3 },  // Times Square
+    { id: 5, latitude: 40.6782, longitude: -73.9442, quantity: 7 },  // Brooklyn
+    { id: 6, latitude: 40.8584, longitude: -73.9285, quantity: 10 }, // Bronx
+    { id: 7, latitude: 40.7282, longitude: -73.7949, quantity: 6 }   // Queens
   ];
+
+  // Slice based on count and spread to new objects to avoid reference issues
+  routes = allSamples.slice(0, count).map(s => ({ ...s, id: Date.now() + Math.random() }));
 
   updateRoutesList();
   updateOptimizeButton();
-  showSuccessMessage('Sample data loaded - Routes are deliberately inefficient!');
+  showSuccessMessage(`Sample data loaded with ${count} stops!`);
 };
 
 window.clearAllRoutes = function () {
@@ -296,7 +310,11 @@ function initOptimization() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ routes })
+        body: JSON.stringify({
+          routes,
+          saveToDatabase: true,
+          routeName: `Optimization ${new Date().toLocaleString()}`
+        })
       });
 
       console.log('Response status:', response.status);
@@ -349,8 +367,19 @@ function displayResults(data) {
   const optimizationDetails = document.getElementById('optimizationDetails');
   const environmentalImpact = document.getElementById('environmentalImpact');
 
-  // No longer need to toggle display block or scrollIntoView for the whole section
-  // because panels control visibility.
+  const vehiclesCount = data.vehicleCounts ? data.vehicleCounts.after : 'N/A';
+
+  // Calculate vehicle type breakdown
+  let vehicleDisplay = vehiclesCount;
+  if (data.vehicles) {
+    const types = {};
+    Object.values(data.vehicles).forEach(v => {
+      const type = v.type || 'Van';
+      types[type] = (types[type] || 0) + (v.vehicle_count_for_cluster || 1);
+    });
+    const typeStrings = Object.entries(types).map(([type, count]) => `${count} ${type.split(' ')[0]}s`);
+    vehicleDisplay = typeStrings.join(', ');
+  }
 
   // Comparison Table
   comparisonTable.innerHTML = `
@@ -385,9 +414,9 @@ function displayResults(data) {
                 ${data.vehicleCounts ? `
                 <tr>
                     <td><strong>Vehicles</strong></td>
-                    <td class="metric-value">${data.vehicleCounts.before}</td>
-                    <td class="metric-value">${data.vehicleCounts.after}</td>
-                    <td><span class="metric-improvement">↓ ${data.vehicleCounts.before - data.vehicleCounts.after} (${data.vehicleCounts.improvement}%)</span></td>
+                    <td class="metric-value">${data.vehicleCounts.before} (Vans)</td>
+                    <td class="metric-value">${vehicleDisplay}</td>
+                    <td><span class="metric-improvement">↓ ${Math.max(0, data.vehicleCounts.before - data.vehicleCounts.after)} improved</span></td>
                 </tr>` : ''}
             </tbody>
         </table>
@@ -412,8 +441,9 @@ function displayResults(data) {
         <div class="detail-item">
             <div class="detail-icon">🚛</div>
             <div class="detail-content">
-                <h4>Vehicle</h4>
-                <p>Standard delivery van (Capacity: 10 orders)</p>
+                <h4>Fleet Assignment</h4>
+                <p>${vehicleDisplay}</p>
+                <small style="color: var(--color-text-muted);">Vans (10 units), Trucks (30 units)</small>
             </div>
         </div>
         <div class="detail-item">
@@ -509,6 +539,76 @@ function displayResults(data) {
 
   // Update Analytics Chart
   updateAnalytics(data);
+}
+
+// ============================================
+// ORDER HISTORY
+// ============================================
+
+async function fetchOrderHistory() {
+  const tableBody = document.getElementById('orderHistoryTableBody');
+  if (!tableBody) return;
+
+  try {
+    const response = await fetch(`${API_URL}/routes`);
+
+    if (!response.ok) {
+      if (response.status === 503) {
+        const err = await response.json();
+        throw new Error(err.message || 'Database disconnected');
+      }
+      throw new Error('Failed to fetch history');
+    }
+
+    const data = await response.json();
+    renderOrderHistory(data.routes || []);
+  } catch (error) {
+    console.error('Error fetching history:', error);
+    tableBody.innerHTML = `<tr><td colspan="6" style="padding: var(--spacing-md); text-align: center; color: var(--color-error);">Error loading history data.</td></tr>`;
+  }
+}
+
+function renderOrderHistory(routeHistory) {
+  const tableBody = document.getElementById('orderHistoryTableBody');
+  if (!tableBody) return;
+
+  if (routeHistory.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="6" style="padding: var(--spacing-xl); text-align: center; color: var(--color-text-muted);">No optimization history found. Run an optimization to see it here.</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = routeHistory.map(route => {
+    const results = route.optimizationResults || {};
+    const savings = results.savings || { percentage: 0 };
+    const date = new Date(route.createdAt).toLocaleString();
+    const locations = route.locations ? route.locations.length : 0;
+    const vehiclesCount = results.vehicleCounts ? results.vehicleCounts.after : 'N/A';
+
+    // Calculate vehicle type breakdown
+    let vehicleDisplay = vehiclesCount;
+    if (results.vehicles) {
+      const types = {};
+      Object.values(results.vehicles).forEach(v => {
+        const type = v.type || 'Van';
+        types[type] = (types[type] || 0) + (v.vehicle_count_for_cluster || 1);
+      });
+      const typeStrings = Object.entries(types).map(([type, count]) => `${count} ${type.split(' ')[0]}s`);
+      vehicleDisplay = typeStrings.join(', ');
+    }
+
+    return `
+            <tr style="border-bottom: 1px solid var(--color-bg-tertiary);">
+                <td style="padding: var(--spacing-sm);">${date}</td>
+                <td style="padding: var(--spacing-sm);">${route.name || 'Untitled'}</td>
+                <td style="padding: var(--spacing-sm);">${locations} stops</td>
+                <td style="padding: var(--spacing-sm);">${vehicleDisplay}</td>
+                <td style="padding: var(--spacing-sm); font-weight: 600; color: var(--color-success);">${savings.percentage}%</td>
+                <td style="padding: var(--spacing-sm);">
+                    <button class="btn btn-ghost btn-sm" onclick="alert('View details of ${route._id}')">Details</button>
+                </td>
+            </tr>
+        `;
+  }).join('');
 }
 
 function hideResults() {
